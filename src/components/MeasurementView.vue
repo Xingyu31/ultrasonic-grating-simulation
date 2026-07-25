@@ -25,7 +25,7 @@
         <div class="params-grid">
           <div class="param-item">
             <label class="param-label">液体浓度</label>
-            <el-slider v-model="localParams.concentration" :min="0" :max="30" :step="0.0001" 
+            <el-slider v-model="localParams.concentration" :min="0" :max="95" :step="0.0001" 
                        show-input :input-size="'small'" />
             <span class="param-unit">wt%</span>
           </div>
@@ -579,7 +579,13 @@ const liquidConfigs = {
       { molL: 6.520, wt: 38.08, speed: 1668.2 },
       { molL: 6.958, wt: 40.64, speed: 1683.4 },
       { molL: 7.547, wt: 44.07, speed: 1695.8 },
-      { molL: 8.019, wt: 46.83, speed: 1713.4 }
+      { molL: 8.019, wt: 46.83, speed: 1713.4 },
+      { molL: 8.570, wt: 50, speed: 1729.8 },
+      { molL: 10.284, wt: 60, speed: 1779.2 },
+      { molL: 11.998, wt: 70, speed: 1828.6 },
+      { molL: 13.712, wt: 80, speed: 1878.0 },
+      { molL: 15.426, wt: 90, speed: 1927.4 },
+      { molL: 16.283, wt: 95, speed: 1952.1 }
     ]
   },
   'ethylene-glycol': {
