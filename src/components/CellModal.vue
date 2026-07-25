@@ -27,13 +27,36 @@
           <div class="slider-container">
             <span class="slider-label">浓度: {{ localConcentration.toFixed(4) }} wt%</span>
             <el-slider v-model="localConcentration" :min="selectedLiquid.minConcentration" :max="selectedLiquid.maxConcentration" :step="0.0001" 
-                       show-input :input-size="'small'" />
+                       show-input :input-size="'small'" :disabled="isPureWater" />
           </div>
           <div class="preset-buttons">
             <button v-for="c in selectedLiquid.presetConcentrations" :key="c"
-                    class="preset-btn" @click="setConcentration(c)">
+                    class="preset-btn" @click="setConcentration(c)" :disabled="isPureWater">
               {{ c.toFixed(2) }}%
             </button>
+          </div>
+        </div>
+        
+        <div class="control-section" v-if="selectedLiquid.useTemperature">
+          <div class="section-label">水温调节</div>
+          <div class="slider-container">
+            <span class="slider-label">温度: {{ localTemperature.toFixed(2) }} °C</span>
+            <el-slider v-model="localTemperature" :min="selectedLiquid.minTemperature" :max="selectedLiquid.maxTemperature" :step="0.1" 
+                       show-input :input-size="'small'" />
+          </div>
+          <div class="temperature-info">
+            <span class="info-icon">💡</span>
+            <span>声速公式: v = 1398 + 3.46 × t</span>
+            <span>当前温度下声速: {{ soundSpeed.toFixed(1) }} m/s</span>
+          </div>
+        </div>
+        
+        <div class="control-section" v-else>
+          <div class="section-label">温度设置</div>
+          <div class="temp-locked-container">
+            <span class="temp-locked-icon">🔒</span>
+            <span class="temp-locked-text">盐溶液模式下温度固定为 20.00°C</span>
+            <button class="temp-locked-btn" @click="showTempWarning">尝试调节温度</button>
           </div>
         </div>
         
@@ -62,15 +85,41 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 
 const props = defineProps({
   concentration: Number,
+  temperature: {
+    type: Number,
+    default: 20
+  },
+  liquidTypeId: {
+    type: String,
+    default: 'nacl'
+  },
   stepCompleted: Boolean
 })
 
-const emit = defineEmits(['close', 'updateConcentration', 'updateLiquidType', 'completeStep'])
+const emit = defineEmits(['close', 'updateConcentration', 'updateLiquidType', 'updateTemperature', 'completeStep'])
 
 const liquidTypes = [
+  {
+    id: 'pure-water',
+    name: '纯水（0 wt% NaCl）',
+    color: '#38bdf8',
+    gradient: 'linear-gradient(180deg, #7dd3fc 0%, #0ea5e9 100%)',
+    minConcentration: 0,
+    maxConcentration: 0,
+    presetConcentrations: [],
+    baseSpeed: 1480,
+    speedFactor: 0,
+    description: '纯水，声速随温度变化（v = 1398 + 3.46t）',
+    useTableData: false,
+    useTemperature: true,
+    minTemperature: 21.0,
+    maxTemperature: 41.0,
+    temperatureFormula: (t) => 1398 + 3.46 * t
+  },
   {
     id: 'nacl',
     name: '氯化钠溶液',
@@ -83,6 +132,7 @@ const liquidTypes = [
     speedFactor: 0,
     description: '盐水溶液，浓度越高声速越快（基于实测数据）',
     useTableData: true,
+    useTemperature: false,
     tableData: [
       { molL: 0.000, wt: 0, speed: 1482.3 },
       { molL: 0.402, wt: 2.35, speed: 1496.0 },
@@ -114,8 +164,11 @@ const liquidTypes = [
   }
 ]
 
-const selectedLiquid = ref(liquidTypes[0])
+const selectedLiquid = ref(liquidTypes.find(l => l.id === props.liquidTypeId) || liquidTypes[0])
 const localConcentration = ref(props.concentration)
+const localTemperature = ref(props.temperature)
+
+const isPureWater = computed(() => selectedLiquid.value.id === 'pure-water')
 
 const interpolateSpeed = (tableData, concentration) => {
   if (concentration <= tableData[0].wt) return tableData[0].speed
@@ -134,6 +187,9 @@ const interpolateSpeed = (tableData, concentration) => {
 
 const soundSpeed = computed(() => {
   const liquid = selectedLiquid.value
+  if (liquid.temperatureFormula) {
+    return liquid.temperatureFormula(localTemperature.value)
+  }
   if (liquid.useTableData && liquid.tableData) {
     return interpolateSpeed(liquid.tableData, localConcentration.value)
   }
@@ -144,6 +200,14 @@ watch(() => props.concentration, (val) => {
   localConcentration.value = val
 })
 
+watch(() => props.temperature, (val) => {
+  localTemperature.value = val
+})
+
+watch(() => props.liquidTypeId, (val) => {
+  selectedLiquid.value = liquidTypes.find(l => l.id === val) || liquidTypes[0]
+})
+
 const selectLiquid = (liquid) => {
   selectedLiquid.value = liquid
   if (liquid.maxConcentration === 0) {
@@ -151,10 +215,17 @@ const selectLiquid = (liquid) => {
   } else if (localConcentration.value > liquid.maxConcentration) {
     localConcentration.value = liquid.presetConcentrations[2] || liquid.maxConcentration / 2
   }
+  if (liquid.useTemperature && !localTemperature.value) {
+    localTemperature.value = liquid.minTemperature
+  }
 }
 
 const setConcentration = (c) => {
   localConcentration.value = c
+}
+
+const showTempWarning = () => {
+  ElMessage.warning('⚠️ 盐溶液模式下温度固定为20°C，请选择"纯水"模式以调节温度')
 }
 
 const applyChanges = () => {
@@ -163,6 +234,7 @@ const applyChanges = () => {
     id: selectedLiquid.value.id,
     name: selectedLiquid.value.name
   })
+  emit('updateTemperature', localTemperature.value)
 }
 
 const completeStep = () => {
@@ -313,6 +385,68 @@ const completeStep = () => {
 
 .preset-btn:hover {
   background-color: #e5e7eb;
+}
+
+.preset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.temperature-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f0fdf4;
+  border-radius: 6px;
+  border-left: 3px solid #22c55e;
+}
+
+.temperature-info .info-icon {
+  font-size: 12px;
+}
+
+.temperature-info span {
+  font-size: 11px;
+  color: #166534;
+}
+
+.temp-locked-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  padding: 15px;
+  background-color: #fef3c7;
+  border-radius: 8px;
+  border: 1px solid #fcd34d;
+}
+
+.temp-locked-icon {
+  font-size: 24px;
+}
+
+.temp-locked-text {
+  font-size: 12px;
+  color: #92400e;
+  font-weight: 600;
+}
+
+.temp-locked-btn {
+  padding: 6px 16px;
+  background-color: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.temp-locked-btn:hover {
+  background-color: #d97706;
 }
 
 .liquid-display {

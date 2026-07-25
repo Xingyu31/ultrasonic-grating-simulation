@@ -97,10 +97,13 @@
     <CellModal 
       v-if="showCellModal" 
       :concentration="localParams.concentration"
+      :temperature="localParams.temperature"
+      :liquidTypeId="localParams.liquidTypeId"
       :stepCompleted="stepCompleted[1]"
       @close="showCellModal = false"
       @updateConcentration="updateConcentration"
       @updateLiquidType="updateLiquidType"
+      @updateTemperature="updateTemperature"
       @completeStep="completeStep(2)"
     />
     <GeneratorModal 
@@ -222,8 +225,14 @@ const updateConcentration = (concentration) => {
 }
 
 const updateLiquidType = (liquidType) => {
-  localParams.liquidType = liquidType
-  emit('update:params', { liquidType })
+  localParams.liquidType = liquidType.name
+  localParams.liquidTypeId = liquidType.id
+  emit('update:params', { liquidType: liquidType.name, liquidTypeId: liquidType.id })
+}
+
+const updateTemperature = (temperature) => {
+  localParams.temperature = temperature
+  emit('update:params', { temperature })
 }
 
 const updateFrequency = (frequency) => {

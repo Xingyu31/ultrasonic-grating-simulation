@@ -13,7 +13,7 @@
           <div class="status-indicators">
             <div class="temp-indicator">
               <span class="temp-icon">🌡️</span>
-              <span class="temp-value">常温 20.00°C</span>
+              <span class="temp-value">{{ isPureWater ? `温度 ${localParams.temperature.toFixed(2)}°C` : '常温 20.00°C' }}</span>
             </div>
             <div class="distance-indicator">
               <span class="distance-icon">📏</span>
@@ -24,10 +24,23 @@
         </div>
         <div class="params-grid">
           <div class="param-item">
+            <label class="param-label">液体类型</label>
+            <select v-model="localParams.liquidTypeId" class="param-select" @change="onLiquidTypeChange">
+              <option value="pure-water">纯水（0 wt% NaCl）</option>
+              <option value="nacl">氯化钠溶液</option>
+            </select>
+          </div>
+          <div class="param-item">
             <label class="param-label">液体浓度</label>
             <el-slider v-model="localParams.concentration" :min="0" :max="95" :step="0.0001" 
-                       show-input :input-size="'small'" />
+                       show-input :input-size="'small'" :disabled="isPureWater" />
             <span class="param-unit">wt%</span>
+          </div>
+          <div class="param-item">
+            <label class="param-label">温度</label>
+            <el-slider v-model="localParams.temperature" :min="21" :max="41" :step="0.1" 
+                       show-input :input-size="'small'" :disabled="!isPureWater" />
+            <span class="param-unit">°C</span>
           </div>
           <div class="param-item">
             <label class="param-label">入射波长</label>
@@ -469,6 +482,22 @@ const experimentVs = ref(null)
 
 const analysisResult = ref(null)
 
+const isPureWater = computed(() => localParams.liquidTypeId === 'pure-water')
+
+const onLiquidTypeChange = () => {
+  if (isPureWater.value) {
+    localParams.concentration = 0
+    if (localParams.temperature < 21 || localParams.temperature > 41) {
+      localParams.temperature = 21
+    }
+  } else {
+    localParams.temperature = 20
+  }
+  experimentVs.value = null
+  emit('update:params', { ...localParams })
+  runSimulation()
+}
+
 const cursors = ref([{ m: 1, x: null }, { m: -1, x: null }])
 const cursorMode = ref(0)
 const activeCursor = ref(null)
@@ -508,6 +537,22 @@ watch(() => props.experimentMode, (newMode) => {
 })
 
 watch(() => props.params.concentration, () => {
+  experimentVs.value = null
+})
+
+watch(() => localParams.temperature, (newTemp) => {
+  if (isPureWater.value) {
+    emit('update:params', { ...localParams })
+    experimentVs.value = null
+    runSimulation()
+  }
+})
+
+watch(() => props.params.temperature, () => {
+  experimentVs.value = null
+})
+
+watch(() => props.params.liquidTypeId, () => {
   experimentVs.value = null
 })
 
@@ -554,7 +599,10 @@ const liquidConfigs = {
   'pure-water': {
     baseSpeed: 1480,
     speedFactor: 0,
-    tableData: null
+    tableData: null,
+    temperatureFormula: (t) => 1398 + 3.46 * t,
+    minTemperature: 21.0,
+    maxTemperature: 41.0
   },
   'nacl': {
     baseSpeed: 1482.3,
@@ -586,7 +634,8 @@ const liquidConfigs = {
       { molL: 13.712, wt: 80, speed: 1878.0 },
       { molL: 15.426, wt: 90, speed: 1927.4 },
       { molL: 16.283, wt: 95, speed: 1952.1 }
-    ]
+    ],
+    temperatureFormula: null
   },
   'ethylene-glycol': {
     baseSpeed: 1500,
@@ -620,8 +669,12 @@ const liquidConfigs = {
   }
 }
 
-const getSoundSpeed = (liquidTypeId, concentration) => {
+const getSoundSpeed = (liquidTypeId, concentration, temperature = 20) => {
   const config = liquidConfigs[liquidTypeId] || liquidConfigs['nacl']
+  
+  if (config.temperatureFormula) {
+    return config.temperatureFormula(temperature)
+  }
   
   if (config.tableData) {
     const tableData = config.tableData
@@ -644,7 +697,7 @@ const getSoundSpeed = (liquidTypeId, concentration) => {
 
 const ultrasonicWavelength = (frequency, concentration, vs = null) => {
   if (vs === null) {
-    const baseVs = getSoundSpeed(props.params.liquidTypeId || 'nacl', concentration)
+    const baseVs = getSoundSpeed(localParams.liquidTypeId || 'nacl', concentration, localParams.temperature)
     const randomVariation = (Math.random() - 0.5) * 5
     vs = baseVs + randomVariation
   }
@@ -670,18 +723,17 @@ const intensityDistribution = (x, wavelength, frequency, concentration, distance
 
 const runSimulation = () => {
   focusComplete.value = true
-  emit('update:params', { ...localParams })
   
   if (experimentVs.value === null) {
-    const baseVs = getSoundSpeed(props.params.liquidTypeId || 'nacl', props.params.concentration)
+    const baseVs = getSoundSpeed(localParams.liquidTypeId || 'nacl', localParams.concentration, localParams.temperature)
     const randomVariation = (Math.random() - 0.5) * 2
     experimentVs.value = baseVs + randomVariation
   }
   
   const k = 1
-  const lambda = props.params.wavelength * 1e-9
-  const f = props.params.frequency * 1e6
-  const L = props.params.distance
+  const lambda = localParams.wavelength * 1e-9
+  const f = localParams.frequency * 1e6
+  const L = localParams.distance
   const vs = experimentVs.value
   
   const theoreticalSpacing = (2 * k * lambda * f * L) / vs
@@ -1316,7 +1368,7 @@ const performAnalysis = () => {
     const sumSpeed = speeds.reduce((acc, v) => acc + v, 0)
     const experimentalSpeed = sumSpeed / speeds.length
     
-    const theoreticalSpeed = getSoundSpeed(props.params.liquidTypeId || 'nacl', props.params.concentration)
+    const theoreticalSpeed = getSoundSpeed(props.params.liquidTypeId || 'nacl', props.params.concentration, props.params.temperature)
     const relativeError = ((experimentalSpeed - theoreticalSpeed) / theoreticalSpeed) * 100
     
     const variance = speeds.reduce((acc, v) => acc + Math.pow(v - experimentalSpeed, 2), 0) / speeds.length
@@ -1513,9 +1565,9 @@ const inputMeasurement = () => {
 }
 
 const autoRead = () => {
-  const wavelength = props.params.wavelength * 1e-9
-  const plus1Pos = fringePosition(1, wavelength, props.params.frequency, props.params.concentration, props.params.distance) * 1000
-  const minus1Pos = fringePosition(-1, wavelength, props.params.frequency, props.params.concentration, props.params.distance) * 1000
+  const wavelength = localParams.wavelength * 1e-9
+  const plus1Pos = fringePosition(1, wavelength, localParams.frequency, localParams.concentration, localParams.distance) * 1000
+  const minus1Pos = fringePosition(-1, wavelength, localParams.frequency, localParams.concentration, localParams.distance) * 1000
   
   const error1 = (Math.random() - 0.5) * 0.008
   const error2 = (Math.random() - 0.5) * 0.008
@@ -1527,6 +1579,18 @@ const autoRead = () => {
 }
 
 const calculateSpacing = () => {
+  if (!plus1Position.value || !minus1Position.value) {
+    showNotification('请先放置游标位置', 'warning')
+    return
+  }
+  
+  const plus1 = parseFloat(plus1Position.value)
+  const minus1 = parseFloat(minus1Position.value)
+  
+  const spacingValue = Math.abs(plus1 - minus1) / 2
+  spacing.value = parseFloat(spacingValue.toFixed(4))
+  
+  showNotification('间距计算完成', 'success')
 }
 
 const showNotification = (msg, type = 'info') => {
@@ -2340,7 +2404,7 @@ const saveRecord = () => {
   if (experimentVs.value !== null) {
     baseVs = experimentVs.value
   } else {
-    baseVs = 1470 + props.params.concentration * 6.5
+    baseVs = getSoundSpeed(localParams.liquidTypeId || 'nacl', localParams.concentration, localParams.temperature)
   }
   
   const speedError = (Math.random() - 0.5) * 3
@@ -2351,9 +2415,9 @@ const saveRecord = () => {
   }
   
   const newRecord = {
-    wavelength: props.params.wavelength,
-    frequency: props.params.frequency,
-    concentration: props.params.concentration,
+    wavelength: localParams.wavelength,
+    frequency: localParams.frequency,
+    concentration: localParams.concentration,
     spacing: measuredSpacing,
     speed: finalSpeed,
     experimentMode: fitTab.value
