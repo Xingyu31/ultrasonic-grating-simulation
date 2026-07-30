@@ -44,7 +44,7 @@
             </div>
             <div class="param-item">
               <label class="param-label">液体浓度</label>
-              <el-slider v-model="localParams.concentration" :min="0" :max="95" :step="0.0001" 
+              <el-slider v-model="localParams.concentration" :min="0" :max="26.47" :step="0.0001" 
                          show-input :input-size="'small'" :disabled="isPureWater" />
               <span class="param-unit">wt%</span>
             </div>
