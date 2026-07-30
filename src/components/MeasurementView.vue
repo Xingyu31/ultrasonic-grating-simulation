@@ -22,51 +22,67 @@
           </div>
           <button class="btn-run" @click="runSimulation">▶ 运行仿真</button>
         </div>
+        <div class="params-tabs">
+          <button class="param-tab" :class="{ active: paramTab === 'liquid' }" @click="paramTab = 'liquid'">
+            💧 液体参数
+          </button>
+          <button class="param-tab" :class="{ active: paramTab === 'optical' }" @click="paramTab = 'optical'">
+            🌈 光学参数
+          </button>
+          <button class="param-tab" :class="{ active: paramTab === 'acoustic' }" @click="paramTab = 'acoustic'">
+            🔊 声学参数
+          </button>
+        </div>
         <div class="params-grid">
-          <div class="param-item">
-            <label class="param-label">液体类型</label>
-            <select v-model="localParams.liquidTypeId" class="param-select" @change="onLiquidTypeChange">
-              <option value="pure-water">纯水（0 wt% NaCl）</option>
-              <option value="nacl">氯化钠溶液</option>
-            </select>
-          </div>
-          <div class="param-item">
-            <label class="param-label">液体浓度</label>
-            <el-slider v-model="localParams.concentration" :min="0" :max="95" :step="0.0001" 
-                       show-input :input-size="'small'" :disabled="isPureWater" />
-            <span class="param-unit">wt%</span>
-          </div>
-          <div class="param-item">
-            <label class="param-label">温度</label>
-            <el-slider v-model="localParams.temperature" :min="21" :max="41" :step="0.1" 
-                       show-input :input-size="'small'" :disabled="!isPureWater" />
-            <span class="param-unit">°C</span>
-          </div>
-          <div class="param-item">
-            <label class="param-label">入射波长</label>
-            <el-slider v-model="localParams.wavelength" :min="380" :max="700" :step="0.1" 
-                       show-input :input-size="'small'" />
-            <span class="param-unit">nm</span>
-          </div>
-          <div class="param-item">
-            <label class="param-label">超声频率</label>
-            <el-slider v-model="localParams.frequency" :min="4" :max="15" :step="0.1" 
-                       show-input :input-size="'small'" />
-            <span class="param-unit">MHz</span>
-          </div>
-          <div class="param-item">
-            <label class="param-label">超声振幅</label>
-            <el-slider v-model="localParams.amplitude" :min="0" :max="100" :step="1" 
-                       show-input :input-size="'small'" />
-            <span class="param-unit">%</span>
-          </div>
-          <div class="param-item">
-            <label class="param-label">狭缝宽度</label>
-            <el-slider v-model="localParams.gratingWidth" :min="0.005" :max="0.02" :step="0.0001" 
-                       show-input :input-size="'small'" />
-            <span class="param-unit">m</span>
-          </div>
-          
+          <template v-if="paramTab === 'liquid'">
+            <div class="param-item">
+              <label class="param-label">液体类型</label>
+              <select v-model="localParams.liquidTypeId" class="param-select" @change="onLiquidTypeChange">
+                <option value="pure-water">纯水（0 wt% NaCl）</option>
+                <option value="nacl">氯化钠溶液</option>
+              </select>
+            </div>
+            <div class="param-item">
+              <label class="param-label">液体浓度</label>
+              <el-slider v-model="localParams.concentration" :min="0" :max="95" :step="0.0001" 
+                         show-input :input-size="'small'" :disabled="isPureWater" />
+              <span class="param-unit">wt%</span>
+            </div>
+            <div class="param-item">
+              <label class="param-label">温度</label>
+              <el-slider v-model="localParams.temperature" :min="21" :max="41" :step="0.1" 
+                         show-input :input-size="'small'" :disabled="!isPureWater" />
+              <span class="param-unit">°C</span>
+            </div>
+          </template>
+          <template v-else-if="paramTab === 'optical'">
+            <div class="param-item">
+              <label class="param-label">入射波长</label>
+              <el-slider v-model="localParams.wavelength" :min="380" :max="700" :step="0.1" 
+                         show-input :input-size="'small'" />
+              <span class="param-unit">nm</span>
+            </div>
+            <div class="param-item">
+              <label class="param-label">狭缝宽度</label>
+              <el-slider v-model="localParams.gratingWidth" :min="0.005" :max="0.02" :step="0.0001" 
+                         show-input :input-size="'small'" />
+              <span class="param-unit">m</span>
+            </div>
+          </template>
+          <template v-else-if="paramTab === 'acoustic'">
+            <div class="param-item">
+              <label class="param-label">超声频率</label>
+              <el-slider v-model="localParams.frequency" :min="4" :max="15" :step="0.1" 
+                         show-input :input-size="'small'" />
+              <span class="param-unit">MHz</span>
+            </div>
+            <div class="param-item">
+              <label class="param-label">超声振幅</label>
+              <el-slider v-model="localParams.amplitude" :min="0" :max="100" :step="1" 
+                         show-input :input-size="'small'" />
+              <span class="param-unit">%</span>
+            </div>
+          </template>
         </div>
         <div class="section-footer">
           <button class="btn-reset" @click="resetParams">重置参数</button>
@@ -444,6 +460,7 @@ const zoomHeight = ref(600)
 const showTableZoom = ref(false)
 
 const fitTab = ref('frequency')
+const paramTab = ref('liquid')
 
 const currentModeInfo = computed(() => {
   switch (fitTab.value) {
@@ -2603,6 +2620,43 @@ onUnmounted(() => {})
 .params-section {
   flex: 1;
   min-height: 400px;
+}
+
+.params-tabs {
+  display: flex;
+  padding: 10px 15px 0;
+  gap: 4px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.param-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-bottom: none;
+  background: #f9fafb;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.param-tab:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.param-tab.active {
+  background: #ffffff;
+  color: #2563eb;
+  border-color: #3b82f6;
+  border-bottom: 2px solid #ffffff;
+  margin-bottom: -1px;
+  box-shadow: 0 -2px 4px rgba(59, 130, 246, 0.1);
 }
 
 .params-grid {
