@@ -5,6 +5,8 @@
     </div>
     
     <ZoomModal :show="showZoomModal" :title="zoomTitle" :drawFn="zoomDrawFn" :width="zoomWidth" :height="zoomHeight" @close="closeZoomModal" />
+
+    <TemperatureFitModal :show="showTempFitModal" :records="records" @close="showTempFitModal = false" />
     
     <div class="left-panel">
       <div class="panel-section params-section">
@@ -49,8 +51,10 @@
               <span class="param-unit">wt%</span>
             </div>
             <div class="param-item">
-              <label class="param-label">温度</label>
-              <el-slider v-model="localParams.temperature" :min="0" :max="100" :step="0.1" 
+              <label class="param-label">温度
+                <button v-if="isPureWater" class="btn-temp-fit" @click="showTempFitModal = true">🌡️ 温度拟合</button>
+              </label>
+              <el-slider v-model="localParams.temperature" :min="0" :max="100" :step="0.1"
                          show-input :input-size="'small'" :disabled="!isPureWater" />
               <span class="param-unit">°C</span>
             </div>
@@ -423,6 +427,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onUnmounted, onActivated, onDeactivated, nextTick } from 'vue'
 import ZoomModal from './ZoomModal.vue'
+import TemperatureFitModal from './TemperatureFitModal.vue'
 import { saveArchive } from '../utils/archive.js'
 import { ElMessage } from 'element-plus'
 
@@ -459,6 +464,7 @@ const zoomWidth = ref(800)
 const zoomHeight = ref(600)
 
 const showTableZoom = ref(false)
+const showTempFitModal = ref(false)
 
 const fitTab = ref('frequency')
 const paramTab = ref('liquid')
@@ -2424,6 +2430,8 @@ const saveRecord = () => {
     wavelength: localParams.wavelength,
     frequency: localParams.frequency,
     concentration: localParams.concentration,
+    temperature: localParams.temperature,
+    liquidTypeId: localParams.liquidTypeId,
     spacing: measuredSpacing,
     speed: finalSpeed,
     experimentMode: fitTab.value
@@ -2692,6 +2700,27 @@ onUnmounted(() => {})
   font-size: 12px;
   font-weight: bold;
   color: #4b5563;
+}
+
+.btn-temp-fit {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  vertical-align: middle;
+}
+
+.btn-temp-fit:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
 }
 
 .param-unit {
