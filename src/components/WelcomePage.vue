@@ -50,10 +50,10 @@
           </div>
           <div class="principle-item">
             <span class="principle-label">声速公式</span>
-            <span class="principle-formula highlight">v = 2kλfL/D<sub>k</sub></span>
+            <span class="principle-formula highlight">v = 2kλfL/D</span>
           </div>
           <div class="principle-description">
-            <p>超声波在液体中以弹性纵波形式传播，形成超声光栅。当平行光通过超声光栅时发生衍射，通过测量第k级衍射条纹间距D<sub>k</sub>，结合已知波长λ、超声频率f和光栅到屏的距离L，即可计算出超声波在液体中的传播速度v。</p>
+            <p>超声波在液体中以弹性纵波形式传播，形成超声光栅。当平行光通过超声光栅时发生衍射，通过测量衍射条纹间距D，结合已知波长λ、超声频率f和光栅到屏的距离L，即可计算出超声波在液体中的传播速度v。</p>
           </div>
         </div>
       </div>

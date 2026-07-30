@@ -339,7 +339,7 @@
                     <span class="fit-param-value" :class="{ 'good': analysisResult.stdDev < 6, 'bad': analysisResult.stdDev >= 6 }">{{ analysisResult.stdDev.toFixed(2) }} m/s</span>
                   </div>
                   <div class="fit-formula">
-                    理论公式: v = 2kλfL / D_k（波长/频率变化，v恒定）
+                    理论公式: v = 2kλfL / D（波长/频率变化，v恒定）
                   </div>
                 </div>
                 <div v-else class="fit-params">
@@ -438,6 +438,7 @@ const props = defineProps({
 const emit = defineEmits(['update:params', 'update:records', 'update:mode'])
 
 const localParams = reactive({ ...props.params })
+const isInternalUpdate = ref(false)
 const focusComplete = ref(true)
 
 const mainCanvas = ref(null)
@@ -468,14 +469,14 @@ const currentModeInfo = computed(() => {
       return {
         variable: `光波长 λ (${props.params.wavelength.toFixed(1)} nm)`,
         fixed: `频率=${props.params.frequency.toFixed(1)}MHz, 浓度=${props.params.concentration.toFixed(4)}wt%`,
-        formula: '声速 v = 2kλfL / D_k（λ变化，v恒定）',
+        formula: '声速 v = 2kλfL / D（λ变化，v恒定）',
         mode: 'wavelength'
       }
     case 'frequency':
       return {
         variable: `超声频率 f (${props.params.frequency.toFixed(1)} MHz)`,
         fixed: `波长=${props.params.wavelength.toFixed(1)}nm, 浓度=${props.params.concentration.toFixed(4)}wt%`,
-        formula: '声速 v = 2kλfL / D_k（f变化，v恒定）',
+        formula: '声速 v = 2kλfL / D（f变化，v恒定）',
         mode: 'frequency'
       }
     case 'concentration':
@@ -522,12 +523,12 @@ const activeCursor = ref(null)
 const spacing = computed(() => {
   const pos1 = parseFloat(plus1Position.value) || 0
   const pos2 = parseFloat(minus1Position.value) || 0
-  return Math.abs(pos1 - pos2) / 2
+  return Math.abs(pos1 - pos2)
 })
 
 const gratingConstant = computed(() => {
   if (spacing.value === 0) return 0
-  return (props.params.wavelength * 1e-9 * props.params.distance) / (spacing.value * 1e-3)
+  return (2 * props.params.wavelength * 1e-9 * props.params.distance) / (spacing.value * 1e-3)
 })
 
 const soundSpeed = computed(() => {
@@ -535,7 +536,7 @@ const soundSpeed = computed(() => {
   if (experimentVs.value !== null) {
     return experimentVs.value
   }
-  return (4 * props.params.wavelength * 1e-9 * props.params.distance * props.params.frequency * 1e6) / (spacing.value * 1e-3)
+  return (2 * props.params.wavelength * 1e-9 * props.params.distance * props.params.frequency * 1e6) / (spacing.value * 1e-3)
 })
 
 const hasData = computed(() => props.records && props.records.length > 0)
@@ -553,15 +554,20 @@ watch(() => props.experimentMode, (newMode) => {
   }
 })
 
-watch(() => props.params.concentration, () => {
-  experimentVs.value = null
+watch(() => localParams.concentration, () => {
+  isInternalUpdate.value = true
+  emit('update:params', { ...localParams })
+  runSimulation()
+  nextTick(() => { isInternalUpdate.value = false })
 })
 
 watch(() => localParams.temperature, (newTemp) => {
   if (isPureWater.value) {
+    isInternalUpdate.value = true
     emit('update:params', { ...localParams })
     experimentVs.value = null
     runSimulation()
+    nextTick(() => { isInternalUpdate.value = false })
   }
 })
 
@@ -573,8 +579,17 @@ watch(() => props.params.liquidTypeId, () => {
   experimentVs.value = null
 })
 
+watch([() => localParams.wavelength, () => localParams.frequency, () => localParams.amplitude, () => localParams.gratingWidth], () => {
+  isInternalUpdate.value = true
+  emit('update:params', { ...localParams })
+  runSimulation()
+  nextTick(() => { isInternalUpdate.value = false })
+})
+
 watch(() => props.params, (newVal) => {
-  Object.assign(localParams, newVal)
+  if (!isInternalUpdate.value) {
+    Object.assign(localParams, newVal)
+  }
 }, { deep: true })
 
 const wavelengthToRgb = (wavelength) => {
@@ -1229,7 +1244,11 @@ const drawFitChart = () => {
   for (let i = 0; i <= 5; i++) {
     const y = 40 + (i / 5) * (height - 90)
     const val = yMax - (i / 5) * (yMax - yMin)
-    ctx.fillText(val.toFixed(0), 45, y + 3)
+    if (fitTab.value === 'concentration') {
+      ctx.fillText(val.toFixed(0), 45, y + 3)
+    } else {
+      ctx.fillText(val.toFixed(2), 45, y + 3)
+    }
   }
   
   ctx.fillStyle = '#9ca3af'
@@ -1303,7 +1322,7 @@ const drawFitChart = () => {
     ctx.fillText(`实验公式: D = (2kfL/v) × λ`, 60, 25)
     ctx.fillText(`固定: 频率=${props.params.frequency}MHz, 浓度=${props.params.concentration}wt%`, 60, 42)
   } else {
-    ctx.fillText(`实验公式: v = 2kλfL / D_k`, 60, 25)
+    ctx.fillText(`实验公式: v = 2kλfL / D`, 60, 25)
     ctx.fillText(`固定: 波长=${props.params.wavelength}nm, 频率=${props.params.frequency}MHz`, 60, 42)
   }
   
@@ -1324,11 +1343,11 @@ const drawFitChart = () => {
   if (stats) {
     if (fitTab.value === 'frequency') {
       ctx.fillText(`拟合直线: D = ${stats.slope.toFixed(4)} × f`, 60, 76)
-      const calcV = (2 * 1 * props.params.wavelength * 1e-9 * props.params.frequency * 1e6 * props.params.distance) / stats.slope
+      const calcV = (2 * props.params.wavelength * props.params.distance) / stats.slope
       ctx.fillText(`计算声速: v = ${calcV.toFixed(2)} m/s`, 60, 93)
     } else if (fitTab.value === 'wavelength') {
       ctx.fillText(`拟合直线: D = ${stats.slope.toFixed(6)} × λ`, 60, 76)
-      const calcV = (2 * 1 * props.params.wavelength * 1e-9 * props.params.frequency * 1e6 * props.params.distance) / (stats.slope * props.params.wavelength)
+      const calcV = (2 * props.params.frequency * props.params.distance) / stats.slope
       ctx.fillText(`计算声速: v = ${calcV.toFixed(2)} m/s`, 60, 93)
     } else {
       ctx.fillText(`拟合直线: v = ${stats.slope.toFixed(2)} × c + ${stats.intercept.toFixed(1)}`, 60, 110)
@@ -1575,7 +1594,7 @@ const calculateSpacing = () => {
   const plus1 = parseFloat(plus1Position.value)
   const minus1 = parseFloat(minus1Position.value)
   
-  const spacingValue = Math.abs(plus1 - minus1) / 2
+  const spacingValue = Math.abs(plus1 - minus1)
   spacing.value = parseFloat(spacingValue.toFixed(4))
   
   showNotification('间距计算完成', 'success')
@@ -2083,7 +2102,11 @@ const drawFitChartZoom = (ctx, width, height) => {
   for (let i = 0; i <= 5; i++) {
     const y = 50 + (i / 5) * (height - 110)
     const val = yMax - (i / 5) * (yMax - yMin)
-    ctx.fillText(val.toFixed(0), 55, y + 3)
+    if (fitTab.value === 'concentration') {
+      ctx.fillText(val.toFixed(0), 55, y + 3)
+    } else {
+      ctx.fillText(val.toFixed(2), 55, y + 3)
+    }
   }
   
   ctx.fillStyle = '#94a3b8'
@@ -2161,7 +2184,7 @@ const drawFitChartZoom = (ctx, width, height) => {
     ctx.fillText(`实验公式: D = (2kfL/v) × λ`, 70, 25)
     ctx.fillText(`固定: 频率=${props.params.frequency}MHz, 浓度=${props.params.concentration}wt%`, 70, 48)
   } else {
-    ctx.fillText(`实验公式: v = 2kλfL / D_k`, 70, 25)
+    ctx.fillText(`实验公式: v = 2kλfL / D`, 70, 25)
     ctx.fillText(`固定: 波长=${props.params.wavelength}nm, 频率=${props.params.frequency}MHz`, 70, 48)
   }
   
@@ -2182,11 +2205,11 @@ const drawFitChartZoom = (ctx, width, height) => {
   if (stats) {
     if (fitTab.value === 'frequency') {
       ctx.fillText(`拟合直线: D = ${stats.slope.toFixed(4)} × f`, 70, 94)
-      const calcV = (2 * 1 * props.params.wavelength * 1e-9 * props.params.frequency * 1e6 * props.params.distance) / stats.slope
+      const calcV = (2 * props.params.wavelength * props.params.distance) / stats.slope
       ctx.fillText(`计算声速: v = ${calcV.toFixed(2)} m/s`, 70, 117)
     } else if (fitTab.value === 'wavelength') {
       ctx.fillText(`拟合直线: D = ${stats.slope.toFixed(6)} × λ`, 70, 94)
-      const calcV = (2 * 1 * props.params.wavelength * 1e-9 * props.params.frequency * 1e6 * props.params.distance) / (stats.slope * props.params.wavelength)
+      const calcV = (2 * props.params.frequency * props.params.distance) / stats.slope
       ctx.fillText(`计算声速: v = ${calcV.toFixed(2)} m/s`, 70, 117)
     } else {
       ctx.fillText(`拟合直线: v = ${stats.slope.toFixed(2)} × c + ${stats.intercept.toFixed(1)}`, 70, 140)
