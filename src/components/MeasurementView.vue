@@ -714,11 +714,9 @@ const intensityDistribution = (x, wavelength, frequency, concentration, distance
 const runSimulation = () => {
   focusComplete.value = true
   
-  if (experimentVs.value === null) {
-    const baseVs = getSoundSpeed(localParams.liquidTypeId || 'nacl', localParams.concentration, localParams.temperature)
-    const randomVariation = (Math.random() - 0.5) * 2
-    experimentVs.value = baseVs + randomVariation
-  }
+  const baseVs = getSoundSpeed(localParams.liquidTypeId || 'nacl', localParams.concentration, localParams.temperature)
+  const randomVariation = (Math.random() - 0.5) * 2
+  experimentVs.value = baseVs + randomVariation
   
   const k = 1
   const lambda = localParams.wavelength * 1e-9
@@ -2390,12 +2388,7 @@ const saveRecord = () => {
   const error = (Math.random() - 0.5) * 0.01
   const measuredSpacing = spacing.value + error
   
-  let baseVs
-  if (experimentVs.value !== null) {
-    baseVs = experimentVs.value
-  } else {
-    baseVs = getSoundSpeed(localParams.liquidTypeId || 'nacl', localParams.concentration, localParams.temperature)
-  }
+  const baseVs = getSoundSpeed(localParams.liquidTypeId || 'nacl', localParams.concentration, localParams.temperature)
   
   const speedError = (Math.random() - 0.5) * 3
   let finalSpeed = baseVs + speedError
@@ -2734,7 +2727,28 @@ onUnmounted(() => {})
 }
 
 .fit-section {
-  height: 300px;
+  flex: 1;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fit-tabs {
+  flex-shrink: 0;
+}
+
+.fit-canvas-container {
+  flex: 1;
+  position: relative;
+  padding: 10px;
+  min-height: 350px;
+}
+
+.fit-canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
 }
 
 .fit-tabs {
@@ -2778,18 +2792,6 @@ onUnmounted(() => {})
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
-}
-
-.fit-canvas-container {
-  position: relative;
-  height: calc(100% - 50px);
-  padding: 10px;
-}
-
-.fit-canvas {
-  width: 100%;
-  height: 100%;
-  border-radius: 4px;
 }
 
 .no-data-hint {
