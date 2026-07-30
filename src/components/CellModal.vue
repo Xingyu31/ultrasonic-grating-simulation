@@ -129,38 +129,10 @@ const liquidTypes = [
     maxConcentration: 95,
     presetConcentrations: [5.84, 11.68, 17.52, 23.36, 29.2, 35.04, 40.88, 50, 60, 70, 80, 90],
     baseSpeed: 1482.3,
-    speedFactor: 0,
-    description: '盐水溶液，浓度越高声速越快（基于实测数据）',
-    useTableData: true,
-    useTemperature: false,
-    tableData: [
-      { molL: 0.000, wt: 0, speed: 1482.3 },
-      { molL: 0.402, wt: 2.35, speed: 1496.0 },
-      { molL: 0.707, wt: 4.13, speed: 1500.4 },
-      { molL: 1.058, wt: 6.18, speed: 1514.8 },
-      { molL: 1.436, wt: 8.40, speed: 1521.5 },
-      { molL: 1.803, wt: 10.53, speed: 1535.8 },
-      { molL: 2.156, wt: 12.59, speed: 1541.7 },
-      { molL: 2.576, wt: 15.04, speed: 1558.5 },
-      { molL: 2.958, wt: 17.28, speed: 1564.7 },
-      { molL: 3.383, wt: 19.76, speed: 1580.1 },
-      { molL: 3.801, wt: 22.20, speed: 1590.2 },
-      { molL: 4.232, wt: 24.72, speed: 1606.3 },
-      { molL: 4.665, wt: 27.24, speed: 1612.7 },
-      { molL: 5.115, wt: 29.87, speed: 1629.3 },
-      { molL: 5.564, wt: 32.50, speed: 1641.0 },
-      { molL: 6.065, wt: 35.42, speed: 1656.5 },
-      { molL: 6.520, wt: 38.08, speed: 1668.2 },
-      { molL: 6.958, wt: 40.64, speed: 1683.4 },
-      { molL: 7.547, wt: 44.07, speed: 1695.8 },
-      { molL: 8.019, wt: 46.83, speed: 1713.4 },
-      { molL: 8.570, wt: 50, speed: 1729.8 },
-      { molL: 10.284, wt: 60, speed: 1779.2 },
-      { molL: 11.998, wt: 70, speed: 1828.6 },
-      { molL: 13.712, wt: 80, speed: 1878.0 },
-      { molL: 15.426, wt: 90, speed: 1927.4 },
-      { molL: 16.283, wt: 95, speed: 1952.1 }
-    ]
+    speedFactor: 4.945,
+    description: '盐水溶液，声速与浓度成正比（v = 1482.3 + 4.945 × c）',
+    useTableData: false,
+    useTemperature: false
   }
 ]
 
