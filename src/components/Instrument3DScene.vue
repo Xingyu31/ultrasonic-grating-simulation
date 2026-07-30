@@ -251,25 +251,18 @@ const createLaser = () => {
  head.position.y = 1.45;
  head.castShadow = true;
  laserGroup.add(head);
- const lensGeometry = new THREE.CircleGeometry(0.15, 32);
- const lensMaterial = new THREE.MeshStandardMaterial({
+ const lensCapGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.12, 32);
+ const lensCapMaterial = new THREE.MeshStandardMaterial({
  color: laserOn.value ? 0xFF6B6B : 0x64748B,
  emissive: laserOn.value ? 0xFF4444 : 0x000000,
  emissiveIntensity: laserOn.value ? 1.0 : 0,
  roughness: 0.1,
- metalness: 0.9,
- side: THREE.DoubleSide
+ metalness: 0.9
  });
- const lens = new THREE.Mesh(lensGeometry, lensMaterial);
- lens.position.set(0, 1.72, 0);
- lens.rotation.x = -Math.PI / 2;
- lens.castShadow = true;
- laserGroup.add(lens);
- const frontCapGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 32);
- const frontCap = new THREE.Mesh(frontCapGeometry, redMaterial);
- frontCap.position.y = 1.6;
- frontCap.castShadow = true;
- laserGroup.add(frontCap);
+ const lensCap = new THREE.Mesh(lensCapGeometry, lensCapMaterial);
+ lensCap.position.y = 1.71;
+ lensCap.castShadow = true;
+ laserGroup.add(lensCap);
  const standPostGeometry = new THREE.CylinderGeometry(0.2, 0.2, 2.0, 16);
  const standPost = new THREE.Mesh(standPostGeometry, aluminumMaterial);
  standPost.position.set(0, -0.5, 0);
@@ -347,11 +340,11 @@ const createLaserBeam = () => {
 };
 const toggleLaserState = () => {
  laserOn.value = !laserOn.value;
- const lens = instruments.laser?.children.find(c => c.geometry?.type === 'CircleGeometry');
- if (lens) {
- lens.material.color.set(laserOn.value ? 0xff6b6b : 0x4a5568);
- lens.material.emissive.set(laserOn.value ? 0xff6b6b : 0x000000);
- lens.material.emissiveIntensity = laserOn.value ? 0.8 : 0;
+ const lensCap = instruments.laser?.children.find(c => c.geometry?.type === 'CylinderGeometry' && c.material?.emissive);
+ if (lensCap) {
+ lensCap.material.color.set(laserOn.value ? 0xff6b6b : 0x4a5568);
+ lensCap.material.emissive.set(laserOn.value ? 0xff6b6b : 0x000000);
+ lensCap.material.emissiveIntensity = laserOn.value ? 0.8 : 0;
  }
  if (laserBeam) {
  laserBeam.children.forEach(child => {
@@ -372,7 +365,6 @@ const createCollimator = () => {
  const blackMaterial = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.5, metalness: 0.6 });
  const aluminumMaterial = new THREE.MeshStandardMaterial({ color: 0xC0C0C0, roughness: 0.3, metalness: 0.9 });
  const brassMaterial = new THREE.MeshStandardMaterial({ color: 0xCD7F32, roughness: 0.4, metalness: 0.7 });
- const lensMaterial = new THREE.MeshStandardMaterial({ color: 0xA5F3FC, roughness: 0.1, metalness: 0.9, side: THREE.DoubleSide, emissive: 0x06B6D4, emissiveIntensity: 0.3 });
  const tubeGeometry = new THREE.CylinderGeometry(0.55, 0.55, 3.0, 32);
  const tube = new THREE.Mesh(tubeGeometry, blackMaterial);
  tube.rotation.x = Math.PI / 2;
@@ -383,29 +375,6 @@ const createCollimator = () => {
  innerTube.rotation.x = Math.PI / 2;
  innerTube.position.z = 0.01;
  collimatorGroup.add(innerTube);
- const flangeGeometry = new THREE.CylinderGeometry(0.75, 0.75, 0.25, 32);
- const flange = new THREE.Mesh(flangeGeometry, brassMaterial);
- flange.position.x = -1.65;
- flange.rotation.x = Math.PI / 2;
- flange.castShadow = true;
- collimatorGroup.add(flange);
- const lensHolderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.3, 32);
- const lensHolder = new THREE.Mesh(lensHolderGeometry, aluminumMaterial);
- lensHolder.position.x = -1.75;
- lensHolder.rotation.x = Math.PI / 2;
- lensHolder.castShadow = true;
- collimatorGroup.add(lensHolder);
- const lensGeometry = new THREE.CircleGeometry(0.42, 32);
- const lens = new THREE.Mesh(lensGeometry, lensMaterial);
- lens.position.set(-1.9, 0, 0);
- lens.castShadow = true;
- collimatorGroup.add(lens);
- const mountingRingGeometry = new THREE.TorusGeometry(0.6, 0.1, 16, 32);
- const mountingRing = new THREE.Mesh(mountingRingGeometry, aluminumMaterial);
- mountingRing.position.x = 0.8;
- mountingRing.rotation.x = Math.PI;
- mountingRing.castShadow = true;
- collimatorGroup.add(mountingRing);
  const saddleGeometry = new THREE.BoxGeometry(0.6, 1.0, 1.0);
  const saddle = new THREE.Mesh(saddleGeometry, aluminumMaterial);
  saddle.position.set(0, -0.45, 0);
@@ -420,11 +389,6 @@ const createCollimator = () => {
  clamp2.position.set(0.35, -0.45, 0);
  clamp2.castShadow = true;
  collimatorGroup.add(clamp2);
- const clampScrewGeometry = new THREE.CylinderGeometry(0.08, 0.06, 0.4, 16);
- const clampScrew = new THREE.Mesh(clampScrewGeometry, aluminumMaterial);
- clampScrew.position.set(0, -0.45, 0.56);
- clampScrew.rotation.x = Math.PI / 2;
- collimatorGroup.add(clampScrew);
  const postGeometry = new THREE.CylinderGeometry(0.25, 0.25, 2.8, 16);
  const post = new THREE.Mesh(postGeometry, aluminumMaterial);
  post.position.set(0, -1.8, 0);
@@ -598,42 +562,6 @@ const createTelescope = () => {
  innerTube.rotation.x = Math.PI / 2;
  innerTube.position.z = 0.01;
  telescopeGroup.add(innerTube);
- const eyepieceGeometry = new THREE.CylinderGeometry(0.28, 0.22, 0.9, 32);
- const eyepiece = new THREE.Mesh(eyepieceGeometry, aluminumMaterial);
- eyepiece.position.x = -2.6;
- eyepiece.rotation.x = Math.PI / 2;
- eyepiece.castShadow = true;
- telescopeGroup.add(eyepiece);
- const eyepieceCapGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.15, 32);
- const eyepieceCap = new THREE.Mesh(eyepieceCapGeometry, brassMaterial);
- eyepieceCap.position.x = -2.95;
- eyepieceCap.rotation.x = Math.PI / 2;
- eyepieceCap.castShadow = true;
- telescopeGroup.add(eyepieceCap);
- const objectiveHolderGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.35, 32);
- const objectiveHolder = new THREE.Mesh(objectiveHolderGeometry, aluminumMaterial);
- objectiveHolder.position.x = 2.4;
- objectiveHolder.rotation.x = Math.PI / 2;
- objectiveHolder.castShadow = true;
- telescopeGroup.add(objectiveHolder);
- const objectiveGeometry = new THREE.CircleGeometry(0.48, 32);
- const objectiveMaterial = new THREE.MeshStandardMaterial({ color: 0x67E8F9, roughness: 0.1, metalness: 0.9, side: THREE.DoubleSide, emissive: 0x0891B2, emissiveIntensity: 0.3 });
- const objective = new THREE.Mesh(objectiveGeometry, objectiveMaterial);
- objective.position.set(2.58, 0, 0);
- objective.castShadow = true;
- telescopeGroup.add(objective);
- const focusingRingGeometry = new THREE.TorusGeometry(0.55, 0.12, 16, 32);
- const focusingRing = new THREE.Mesh(focusingRingGeometry, greenMaterial);
- focusingRing.position.x = 0.6;
- focusingRing.rotation.x = Math.PI;
- focusingRing.castShadow = true;
- telescopeGroup.add(focusingRing);
- const micrometerRingGeometry = new THREE.TorusGeometry(0.3, 0.06, 16, 32);
- const micrometerRing = new THREE.Mesh(micrometerRingGeometry, brassMaterial);
- micrometerRing.position.x = -1.8;
- micrometerRing.rotation.x = Math.PI;
- micrometerRing.castShadow = true;
- telescopeGroup.add(micrometerRing);
  const saddleGeometry = new THREE.BoxGeometry(0.6, 1.0, 1.0);
  const saddle = new THREE.Mesh(saddleGeometry, aluminumMaterial);
  saddle.position.set(0, -0.45, 0);
@@ -648,11 +576,6 @@ const createTelescope = () => {
  clamp2.position.set(0.35, -0.45, 0);
  clamp2.castShadow = true;
  telescopeGroup.add(clamp2);
- const clampScrewGeometry = new THREE.CylinderGeometry(0.08, 0.06, 0.4, 16);
- const clampScrew = new THREE.Mesh(clampScrewGeometry, aluminumMaterial);
- clampScrew.position.set(0, -0.45, 0.56);
- clampScrew.rotation.x = Math.PI / 2;
- telescopeGroup.add(clampScrew);
  const postGeometry = new THREE.CylinderGeometry(0.25, 0.25, 2.8, 16);
  const post = new THREE.Mesh(postGeometry, aluminumMaterial);
  post.position.set(0, -1.8, 0);
@@ -798,21 +721,12 @@ const createCCD = () => {
  frontPlate.position.set(-0.525, 0, 0);
  frontPlate.castShadow = true;
  ccdGroup.add(frontPlate);
- const lensHolderGeometry = new THREE.CylinderGeometry(0.4, 0.3, 0.22, 32);
- const lensHolder = new THREE.Mesh(lensHolderGeometry, aluminumMaterial);
- lensHolder.position.x = -0.65;
- lensHolder.castShadow = true;
- ccdGroup.add(lensHolder);
- const lensRingGeometry = new THREE.CylinderGeometry(0.32, 0.32, 0.08, 32);
- const lensRing = new THREE.Mesh(lensRingGeometry, new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.4, metalness: 0.7 }));
- lensRing.position.x = -0.75;
- lensRing.castShadow = true;
- ccdGroup.add(lensRing);
- const lensGeometry = new THREE.CircleGeometry(0.25, 32);
- const lens = new THREE.Mesh(lensGeometry, lensMaterial);
- lens.position.set(-0.82, 0, 0);
- lens.castShadow = true;
- ccdGroup.add(lens);
+ const lensCapGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 32);
+ const lensCap = new THREE.Mesh(lensCapGeometry, blackMaterial);
+ lensCap.position.x = -0.565;
+ lensCap.rotation.x = Math.PI / 2;
+ lensCap.castShadow = true;
+ ccdGroup.add(lensCap);
  const screenGeometry = new THREE.BoxGeometry(0.7, 0.55, 0.04);
  const screenMaterial = new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.1, metalness: 0.3, emissive: 0x020617, emissiveIntensity: 0.2 });
  const screen = new THREE.Mesh(screenGeometry, screenMaterial);
@@ -827,12 +741,6 @@ const createCCD = () => {
  const statusLight = new THREE.Mesh(statusLightGeometry, new THREE.MeshStandardMaterial({ color: 0x22C55E, emissive: 0x166534, emissiveIntensity: 0.8 }));
  statusLight.position.set(0.45, -0.3, 0.41);
  ccdGroup.add(statusLight);
- const cableGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3.5, 16);
- const cableMaterial = new THREE.MeshStandardMaterial({ color: 0x334155 });
- const cable = new THREE.Mesh(cableGeometry, cableMaterial);
- cable.position.set(0, -0.55, -0.43);
- cable.rotation.x = Math.PI / 2;
- ccdGroup.add(cable);
  const standPostGeometry = new THREE.CylinderGeometry(0.2, 0.2, 2.0, 16);
  const standPost = new THREE.Mesh(standPostGeometry, aluminumMaterial);
  standPost.position.set(0, -1.65, 0);
@@ -974,27 +882,6 @@ const createComputer = () => {
  scene.add(computerGroup);
  instruments.computer = computerGroup;
 };
-const createCables = () => {
- const cableMaterial = new THREE.MeshStandardMaterial({ color: 0x2d3748, roughness: 0.8, metalness: 0.2 });
- const points = [];
- points.push(new THREE.Vector3(-2, 0.25, 0.6));
- points.push(new THREE.Vector3(-2.5, 0.1, 0.6));
- points.push(new THREE.Vector3(-3.5, 0.1, 0.6));
- points.push(new THREE.Vector3(-3.5, 0.1, 0));
- points.push(new THREE.Vector3(-4, 0.1, 0));
- const curve = new THREE.CatmullRomCurve3(points);
- const tubeGeometry = new THREE.TubeGeometry(curve, 50, 0.02, 8, false);
- const cable = new THREE.Mesh(tubeGeometry, cableMaterial);
- scene.add(cable);
- const ccdCablePoints = [];
- ccdCablePoints.push(new THREE.Vector3(6.35, -0.1, 0));
- ccdCablePoints.push(new THREE.Vector3(8, -0.1, 0));
- ccdCablePoints.push(new THREE.Vector3(10, 0, 0));
- const ccdCurve = new THREE.CatmullRomCurve3(ccdCablePoints);
- const ccdTubeGeometry = new THREE.TubeGeometry(ccdCurve, 50, 0.015, 8, false);
- const ccdCable = new THREE.Mesh(ccdTubeGeometry, cableMaterial);
- scene.add(ccdCable);
-};
 const createInstruments = () => {
  createLaser();
  createCollimator();
@@ -1003,7 +890,6 @@ const createInstruments = () => {
  createTelescope();
  createCCD();
  createComputer();
- createCables();
  usedInstruments.value = ['laser', 'collimator', 'cell', 'generator', 'telescope', 'ccd', 'computer'];
  hideAllInstruments();
 };
@@ -1105,20 +991,18 @@ const createLaserAt = (pos) => {
  head.position.y = 1.1;
  head.castShadow = true;
  laserGroup.add(head);
- const lensGeometry = new THREE.CircleGeometry(0.1, 32);
- const lensMaterial = new THREE.MeshStandardMaterial({
+ const lensCapGeometry = new THREE.CylinderGeometry(0.12, 0.12, 0.08, 32);
+ const lensCapMaterial = new THREE.MeshStandardMaterial({
  color: laserOn.value ? 0xff6b6b : 0x4a5568,
  emissive: laserOn.value ? 0xff6b6b : 0x000000,
  emissiveIntensity: laserOn.value ? 0.8 : 0,
  roughness: 0.1,
- metalness: 0.9,
- side: THREE.DoubleSide
+ metalness: 0.9
  });
- const lens = new THREE.Mesh(lensGeometry, lensMaterial);
- lens.position.set(0, 1.35, 0);
- lens.rotation.x = -Math.PI / 2;
- lens.castShadow = true;
- laserGroup.add(lens);
+ const lensCap = new THREE.Mesh(lensCapGeometry, lensCapMaterial);
+ lensCap.position.y = 1.34;
+ lensCap.castShadow = true;
+ laserGroup.add(lensCap);
  const mountGeometry = new THREE.BoxGeometry(0.2, 0.35, 0.2);
  const mount = new THREE.Mesh(mountGeometry, baseMaterial);
  mount.position.y = 0.2;
@@ -1183,21 +1067,6 @@ const createCollimatorAt = (pos) => {
  const tube = new THREE.Mesh(tubeGeometry, bodyMaterial);
  tube.rotation.x = Math.PI / 2;
  collimatorGroup.add(tube);
- const flangeGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.1, 32);
- const flange = new THREE.Mesh(flangeGeometry, bodyMaterial);
- flange.position.x = 0.65;
- flange.rotation.x = Math.PI / 2;
- collimatorGroup.add(flange);
- const lensHolderGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.15, 32);
- const lensHolder = new THREE.Mesh(lensHolderGeometry, bodyMaterial);
- lensHolder.position.x = 0.725;
- lensHolder.rotation.x = Math.PI / 2;
- collimatorGroup.add(lensHolder);
- const lensGeometry = new THREE.CircleGeometry(0.18, 32);
- const lensMaterial = new THREE.MeshStandardMaterial({ color: 0x87ceeb, roughness: 0.1, metalness: 0.9, side: THREE.DoubleSide });
- const lens = new THREE.Mesh(lensGeometry, lensMaterial);
- lens.position.set(0.85, 0, 0);
- collimatorGroup.add(lens);
  const mountGeometry = new THREE.BoxGeometry(0.3, 0.4, 0.3);
  const mount = new THREE.Mesh(mountGeometry, bodyMaterial);
  mount.position.set(0, -0.2, 0);
@@ -1324,26 +1193,6 @@ const createTelescopeAt = (pos) => {
  const mainTube = new THREE.Mesh(mainTubeGeometry, blackMaterial);
  mainTube.rotation.x = Math.PI / 2;
  telescopeGroup.add(mainTube);
- const eyepieceGeometry = new THREE.CylinderGeometry(0.15, 0.12, 0.5, 32);
- const eyepiece = new THREE.Mesh(eyepieceGeometry, metalMaterial);
- eyepiece.position.x = 1.45;
- eyepiece.rotation.x = Math.PI / 2;
- telescopeGroup.add(eyepiece);
- const objectiveHolderGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.2, 32);
- const objectiveHolder = new THREE.Mesh(objectiveHolderGeometry, metalMaterial);
- objectiveHolder.position.x = -1.35;
- objectiveHolder.rotation.x = Math.PI / 2;
- telescopeGroup.add(objectiveHolder);
- const objectiveGeometry = new THREE.CircleGeometry(0.28, 32);
- const objectiveMaterial = new THREE.MeshStandardMaterial({ color: 0x1a365d, roughness: 0.1, metalness: 0.8, side: THREE.DoubleSide });
- const objective = new THREE.Mesh(objectiveGeometry, objectiveMaterial);
- objective.position.set(-1.5, 0, 0);
- telescopeGroup.add(objective);
- const focusingRingGeometry = new THREE.TorusGeometry(0.31, 0.04, 16, 32);
- const focusingRing = new THREE.Mesh(focusingRingGeometry, metalMaterial);
- focusingRing.position.x = 0.3;
- focusingRing.rotation.x = Math.PI;
- telescopeGroup.add(focusingRing);
  const mountGeometry = new THREE.BoxGeometry(0.3, 0.4, 0.2);
  const mount = new THREE.Mesh(mountGeometry, blackMaterial);
  mount.position.y = -0.2;
@@ -1372,14 +1221,11 @@ const createCCDAt = (pos) => {
  const bodyGeometry = new THREE.BoxGeometry(0.9, 0.6, 0.4);
  const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
  ccdGroup.add(body);
- const lensHolderGeometry = new THREE.CylinderGeometry(0.35, 0.25, 0.15, 32);
- const lensHolder = new THREE.Mesh(lensHolderGeometry, bodyMaterial);
- lensHolder.position.x = -0.525;
- ccdGroup.add(lensHolder);
- const lensGeometry = new THREE.CircleGeometry(0.22, 32);
- const lens = new THREE.Mesh(lensGeometry, lensMaterial);
- lens.position.set(-0.65, 0, 0);
- ccdGroup.add(lens);
+ const lensCapGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.06, 32);
+ const lensCap = new THREE.Mesh(lensCapGeometry, bodyMaterial);
+ lensCap.position.x = -0.48;
+ lensCap.rotation.x = Math.PI / 2;
+ ccdGroup.add(lensCap);
  const screenGeometry = new THREE.BoxGeometry(0.5, 0.35, 0.03);
  const screenMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.1, metalness: 0.3 });
  const screen = new THREE.Mesh(screenGeometry, screenMaterial);
@@ -1389,12 +1235,6 @@ const createCCDAt = (pos) => {
  const screenBorder = new THREE.Mesh(screenBorderGeometry, bodyMaterial);
  screenBorder.position.set(0.475, 0, 0);
  ccdGroup.add(screenBorder);
- const cableGeometry = new THREE.CylinderGeometry(0.04, 0.04, 2, 16);
- const cableMaterial = new THREE.MeshStandardMaterial({ color: 0x2d3748 });
- const cable = new THREE.Mesh(cableGeometry, cableMaterial);
- cable.position.set(0.5, -0.15, -0.2);
- cable.rotation.z = Math.PI / 2;
- ccdGroup.add(cable);
  const baseGeometry = new THREE.BoxGeometry(1.0, 0.2, 0.5);
  const base = new THREE.Mesh(baseGeometry, bodyMaterial);
  base.position.y = -0.5;
