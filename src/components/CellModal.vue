@@ -116,8 +116,8 @@ const liquidTypes = [
     description: '纯水，声速随温度变化（v = 1398 + 3.46t）',
     useTableData: false,
     useTemperature: true,
-    minTemperature: 21.0,
-    maxTemperature: 41.0,
+    minTemperature: 0,
+    maxTemperature: 100,
     temperatureFormula: (t) => 1398 + 3.46 * t
   },
   {

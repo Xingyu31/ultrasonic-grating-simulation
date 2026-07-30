@@ -50,7 +50,7 @@
             </div>
             <div class="param-item">
               <label class="param-label">温度</label>
-              <el-slider v-model="localParams.temperature" :min="21" :max="41" :step="0.1" 
+              <el-slider v-model="localParams.temperature" :min="0" :max="100" :step="0.1" 
                          show-input :input-size="'small'" :disabled="!isPureWater" />
               <span class="param-unit">°C</span>
             </div>
@@ -505,7 +505,7 @@ const isPureWater = computed(() => localParams.liquidTypeId === 'pure-water')
 const onLiquidTypeChange = () => {
   if (isPureWater.value) {
     localParams.concentration = 0
-    if (localParams.temperature < 21 || localParams.temperature > 41) {
+    if (localParams.temperature < 0 || localParams.temperature > 100) {
       localParams.temperature = 21
     }
   } else {
@@ -633,8 +633,8 @@ const liquidConfigs = {
     speedFactor: 0,
     tableData: null,
     temperatureFormula: (t) => 1398 + 3.46 * t,
-    minTemperature: 21.0,
-    maxTemperature: 41.0
+    minTemperature: 0,
+    maxTemperature: 100
   },
   'nacl': {
     baseSpeed: 1482.3,
