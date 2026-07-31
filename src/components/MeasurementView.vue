@@ -3267,11 +3267,27 @@ onUnmounted(() => {})
 .right-panel {
   width: 22%;
   min-width: 380px;
+  height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
   border-left: 1px solid #e5e7eb;
   overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.right-panel > * {
+  flex-shrink: 0;
+}
+
+.right-panel > .records-section {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.right-panel > .results-section {
+  flex-shrink: 0;
 }
 
 .measurement-section {
@@ -3480,11 +3496,33 @@ onUnmounted(() => {})
 
 .records-section {
   flex: 1;
-  min-height: 600px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  overflow: visible;
+  gap: 8px;
+  padding: 0 8px;
+  overflow: hidden;
+}
+
+.sub-table-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sub-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  font-weight: bold;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 
 .btn-clear {
@@ -3726,6 +3764,7 @@ onUnmounted(() => {})
   overflow: visible;
   position: relative;
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .common-header-inner {
@@ -3757,8 +3796,8 @@ onUnmounted(() => {})
 .records-scroll-wrapper {
   overflow-x: scroll !important;
   overflow-y: scroll !important;
-  max-height: 180px;
-  min-height: 60px;
+  flex: 1;
+  min-height: 0;
   scrollbar-width: thin;
   scrollbar-color: #94a3b8 #f1f5f9;
   background: white;
