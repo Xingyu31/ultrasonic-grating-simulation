@@ -241,13 +241,13 @@
           <div class="records-scroll-wrapper">
             <table class="records-table">
               <colgroup>
-                <col style="width:60px;">
-                <col style="width:100px;">
-                <col style="width:100px;">
-                <col style="width:120px;">
-                <col style="width:110px;">
-                <col style="width:110px;">
-                <col style="width:60px;">
+                <col style="width:50px;">
+                <col style="width:95px;">
+                <col style="width:90px;">
+                <col style="width:105px;">
+                <col style="width:95px;">
+                <col style="width:95px;">
+                <col style="width:55px;">
               </colgroup>
               <tbody>
                 <tr v-for="(record, index) in getModeRecords('wavelength')" :key="'w-' + index">
@@ -283,13 +283,13 @@
           <div class="records-scroll-wrapper">
             <table class="records-table">
               <colgroup>
-                <col style="width:60px;">
-                <col style="width:100px;">
-                <col style="width:100px;">
-                <col style="width:120px;">
-                <col style="width:110px;">
-                <col style="width:110px;">
-                <col style="width:60px;">
+                <col style="width:50px;">
+                <col style="width:95px;">
+                <col style="width:90px;">
+                <col style="width:105px;">
+                <col style="width:95px;">
+                <col style="width:95px;">
+                <col style="width:55px;">
               </colgroup>
               <tbody>
                 <tr v-for="(record, index) in getModeRecords('frequency')" :key="'f-' + index">
@@ -325,13 +325,13 @@
           <div class="records-scroll-wrapper">
             <table class="records-table">
               <colgroup>
-                <col style="width:60px;">
-                <col style="width:100px;">
-                <col style="width:100px;">
-                <col style="width:120px;">
-                <col style="width:110px;">
-                <col style="width:110px;">
-                <col style="width:60px;">
+                <col style="width:50px;">
+                <col style="width:95px;">
+                <col style="width:90px;">
+                <col style="width:105px;">
+                <col style="width:95px;">
+                <col style="width:95px;">
+                <col style="width:55px;">
               </colgroup>
               <tbody>
                 <tr v-for="(record, index) in getModeRecords('concentration')" :key="'c-' + index">
@@ -3265,8 +3265,8 @@ onUnmounted(() => {})
 }
 
 .right-panel {
-  width: 35%;
-  min-width: 620px;
+  width: 22%;
+  min-width: 380px;
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
@@ -3480,10 +3480,11 @@ onUnmounted(() => {})
 
 .records-section {
   flex: 1;
-  min-height: 500px;
+  min-height: 600px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  overflow: visible;
 }
 
 .btn-clear {
@@ -3722,55 +3723,61 @@ onUnmounted(() => {})
 .records-common-header {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
   border-radius: 8px 8px 0 0;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
+  z-index: 10;
 }
 
 .common-header-inner {
   display: flex;
-  width: 100%;
+  min-width: 660px;
+  width: max-content;
 }
 
 .common-col {
-  padding: 12px 8px;
+  padding: 10px 6px;
   text-align: center;
   color: white;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: bold;
   white-space: nowrap;
   flex-shrink: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.col-index { flex: 0 0 60px; }
-.col-wavelength { flex: 0 0 100px; }
-.col-frequency { flex: 0 0 100px; }
-.col-concentration { flex: 0 0 120px; }
-.col-spacing { flex: 0 0 110px; }
-.col-speed { flex: 0 0 110px; }
-.col-action { flex: 0 0 60px; }
+.col-index { flex: 0 0 50px; }
+.col-wavelength { flex: 0 0 95px; }
+.col-frequency { flex: 0 0 90px; }
+.col-concentration { flex: 0 0 105px; }
+.col-spacing { flex: 0 0 95px; }
+.col-speed { flex: 0 0 95px; }
+.col-action { flex: 0 0 55px; }
 
-/* 滚动容器 - 每个子表独立 */
+/* 滚动容器 - 每个子表独立，必须能横向和纵向滚动 */
 .records-scroll-wrapper {
-  overflow-x: auto;
-  overflow-y: auto;
-  max-height: 200px;
-  min-height: 80px;
+  overflow-x: scroll !important;
+  overflow-y: scroll !important;
+  max-height: 180px;
+  min-height: 60px;
   scrollbar-width: thin;
   scrollbar-color: #94a3b8 #f1f5f9;
+  background: white;
 }
 
 .records-scroll-wrapper::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
+  display: block;
 }
 
 .records-scroll-wrapper::-webkit-scrollbar-track {
   background: #f1f5f9;
-  border-radius: 5px;
+  border-radius: 4px;
 }
 
 .records-scroll-wrapper::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
-  border-radius: 5px;
+  border-radius: 4px;
 }
 
 .records-scroll-wrapper::-webkit-scrollbar-thumb:hover {
@@ -3778,26 +3785,26 @@ onUnmounted(() => {})
 }
 
 .records-table {
-  width: 100%;
+  width: max-content;
   min-width: 660px;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .records-table td {
-  padding: 10px 12px;
+  padding: 8px 6px;
   text-align: center;
   border-bottom: 1px solid #f1f5f9;
   white-space: nowrap;
 }
 
-.records-table .col-index { width: 60px; }
-.records-table .col-wavelength { width: 100px; }
-.records-table .col-frequency { width: 100px; }
-.records-table .col-concentration { width: 120px; }
-.records-table .col-spacing { width: 110px; }
-.records-table .col-speed { width: 110px; }
-.records-table .col-action { width: 60px; }
+.records-table .col-index { width: 50px; }
+.records-table .col-wavelength { width: 95px; }
+.records-table .col-frequency { width: 90px; }
+.records-table .col-concentration { width: 105px; }
+.records-table .col-spacing { width: 95px; }
+.records-table .col-speed { width: 95px; }
+.records-table .col-action { width: 55px; }
 
 .records-table tr:hover {
   background-color: #f8fafc;
