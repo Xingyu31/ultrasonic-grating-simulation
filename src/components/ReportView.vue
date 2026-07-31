@@ -234,9 +234,9 @@
                 <h3>二、实验原理</h3>
                 <p>液体中的超声声速与温度密切相关。在纯水中，声速随温度升高而增大，遵循以下经验公式：</p>
                 <div class="formula-box">
-                  v(T) = 1500 + 0.4 × (T - 25) m/s
+                  v(T) = 1398 + 3.46 × T m/s
                 </div>
-                <p>其中 v(T) 为温度T时的声速，T为摄氏温度。在25°C时，纯水中声速约为1500 m/s，温度每升高1°C，声速约增加0.4 m/s。</p>
+                <p>其中 v(T) 为温度T时的声速，T为摄氏温度。在20°C时，纯水中声速约为1467.2 m/s，温度每升高1°C，声速约增加3.46 m/s。</p>
               </div>
               
               <div class="subsection">
@@ -298,7 +298,7 @@
                   </div>
                   <div class="analysis-item">
                     <span class="analysis-label">理论温度系数</span>
-                    <span class="analysis-value">0.400 m/s·°C</span>
+                    <span class="analysis-value">3.460 m/s·°C</span>
                   </div>
                   <div class="analysis-item">
                     <span class="analysis-label">相对误差</span>
@@ -549,8 +549,16 @@ const reportModes = [
       '学会用线性拟合与统计检验处理实验数据',
       '研究固定入射光波长和超声频率时，液体浓度与声速的关系，验证声速随浓度线性变化'
     ],
-    principle: '液体中的声速与浓度有关，当浓度增加时，液体密度和弹性模量发生变化，导致声速改变。实验表明，在一定浓度范围内，声速与浓度呈线性关系：v = v₀ + kc，其中v₀为纯水的声速（约1500 m/s），k为比例系数（约10 m/s·wt%）。',
-    formula: '声速公式：v = 1500 + 10 × c',
+    principle: computed(() => {
+      const liquidTypeId = props.params.liquidTypeId || 'nacl'
+      const liquidData = liquidTypesData[liquidTypeId] || liquidTypesData['nacl']
+      return `液体中的声速与浓度有关，当浓度增加时，液体密度和弹性模量发生变化，导致声速改变。实验表明，在一定浓度范围内，声速与浓度呈线性关系：v = v₀ + kc，其中v₀为基准声速（${liquidData.baseSpeed} m/s），k为比例系数（约${liquidData.speedFactor} m/s·wt%）。`
+    }),
+    formula: computed(() => {
+      const liquidTypeId = props.params.liquidTypeId || 'nacl'
+      const liquidData = liquidTypesData[liquidTypeId] || liquidTypesData['nacl']
+      return `声速公式：v = ${liquidData.baseSpeed} + ${liquidData.speedFactor} × c`
+    }),
     xLabel: '浓度 (wt%)',
     yLabel: '条纹间距 (mm)',
     xField: 'concentration',
@@ -646,8 +654,15 @@ const getConclusion = (modeId) => {
     const sumX2 = concentrations.reduce((acc, v) => acc + v * v, 0)
     const denom = n * sumX2 - sumX * sumX
     const slope = denom > 0 ? (n * sumXY - sumX * sumY) / denom : 0
+    const intercept = avgSpeed - slope * sumX / n
     
-    return `通过改变液体浓度（${Math.min(...concentrations).toFixed(2)}~${Math.max(...concentrations).toFixed(2)} wt%），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s。线性拟合得到声速与浓度的关系为 v = ${slope.toFixed(1)} × c + ${(avgSpeed - slope * sumX / n).toFixed(1)}。理论公式为 v = 10 × c + 1500，拟合斜率与理论值的偏差为 ${Math.abs(((slope - 10) / 10) * 100).toFixed(2)}%。实验结果表明声速随浓度线性变化，符合理论预期。`
+    const liquidTypeId = props.params.liquidTypeId || 'nacl'
+    const liquidData = liquidTypesData[liquidTypeId] || liquidTypesData['nacl']
+    const theoSlope = liquidData.speedFactor
+    const theoIntercept = liquidData.baseSpeed
+    const slopeError = Math.abs(((slope - theoSlope) / theoSlope) * 100)
+    
+    return `通过改变液体浓度（${Math.min(...concentrations).toFixed(2)}~${Math.max(...concentrations).toFixed(2)} wt%），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s。线性拟合得到声速与浓度的关系为 v = ${slope.toFixed(2)} × c + ${intercept.toFixed(1)}。理论公式为 v = ${theoIntercept} + ${theoSlope} × c，拟合斜率与理论值的偏差为 ${slopeError.toFixed(2)}%。实验结果表明声速随浓度线性变化，符合理论预期。`
   }
   
   return ''
@@ -695,8 +710,8 @@ const getTemperatureRecords = () => {
 }
 
 const getTheoreticalTempSpeed = (temperature) => {
-  if (!temperature) return 1500
-  return 1500 + 0.4 * (temperature - 25)
+  if (!temperature) return 1398
+  return 1398 + 3.46 * temperature
 }
 
 const getTempError = (record) => {
@@ -777,7 +792,7 @@ const getTemperatureConclusion = () => {
   const consistency = getTemperatureConsistency()
   const temps = records.map(r => r.temperature).filter(t => t !== undefined && t !== null)
   
-  return `在纯水中进行温度调节实验，温度范围为 ${Math.min(...temps).toFixed(1)}~${Math.max(...temps).toFixed(1)}°C。测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${avgTheoSpeed.toFixed(1)} m/s，相对误差为 ${Math.abs(error).toFixed(2)}%。通过线性拟合得到声速温度系数为 ${coefficient.toFixed(3)} m/s·°C，与理论值 0.400 m/s·°C 的偏差为 ${Math.abs(((coefficient - 0.4) / 0.4) * 100).toFixed(2)}%。数据一致性为${consistency}，实验结果表明纯水中声速随温度线性增加，符合理论预期。`
+  return `在纯水中进行温度调节实验，温度范围为 ${Math.min(...temps).toFixed(1)}~${Math.max(...temps).toFixed(1)}°C。测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${avgTheoSpeed.toFixed(1)} m/s，相对误差为 ${Math.abs(error).toFixed(2)}%。通过线性拟合得到声速温度系数为 ${coefficient.toFixed(3)} m/s·°C，与理论值 3.460 m/s·°C 的偏差为 ${Math.abs(((coefficient - 3.46) / 3.46) * 100).toFixed(2)}%。数据一致性为${consistency}，实验结果表明纯水中声速随温度线性增加，符合理论预期。`
 }
 
 const getTemperatureStatus = () => {
