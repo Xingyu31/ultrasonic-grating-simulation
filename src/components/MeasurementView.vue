@@ -212,12 +212,25 @@
           </div>
         </div>
         
+        <!-- 公共表头 -->
+        <div class="records-common-header">
+          <div class="common-header-inner">
+            <div class="common-col col-index">序号</div>
+            <div class="common-col col-wavelength">波长(nm)</div>
+            <div class="common-col col-frequency">频率(MHz)</div>
+            <div class="common-col col-concentration">浓度(wt%)</div>
+            <div class="common-col col-spacing">间距(mm)</div>
+            <div class="common-col col-speed">声速(m/s)</div>
+            <div class="common-col col-action">操作</div>
+          </div>
+        </div>
+
         <!-- 🌈 波长影响记录表 -->
         <div class="sub-table-section">
           <div class="sub-table-header wavelength-header">
             <div class="sub-table-info">
               <span class="sub-table-title">🌈 光波长影响实验数据</span>
-              <span class="sub-table-count">共 {{ getModeRecords('wavelength').length }} 条记录</span>
+              <span class="sub-table-count">共 {{ getModeRecords('wavelength').length }} 条</span>
             </div>
             <div class="sub-table-actions">
               <button class="btn-table-action" @click="exportModeExcel('wavelength')">💾 导出</button>
@@ -225,8 +238,8 @@
               <button class="btn-table-action btn-zoom" @click="zoomModeTable('wavelength')">🔍 放大</button>
             </div>
           </div>
-          <div class="records-table-container">
-            <table class="records-table records-table-wavelength">
+          <div class="records-scroll-wrapper">
+            <table class="records-table">
               <colgroup>
                 <col style="width:60px;">
                 <col style="width:100px;">
@@ -234,28 +247,17 @@
                 <col style="width:120px;">
                 <col style="width:110px;">
                 <col style="width:110px;">
-                <col style="width:70px;">
+                <col style="width:60px;">
               </colgroup>
-              <thead>
-                <tr>
-                  <th>序号</th>
-                  <th>波长(nm)</th>
-                  <th>频率(MHz)</th>
-                  <th>浓度(wt%)</th>
-                  <th>间距(mm)</th>
-                  <th>声速(m/s)</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
               <tbody>
                 <tr v-for="(record, index) in getModeRecords('wavelength')" :key="'w-' + index">
-                  <td>{{ index + 1 }}</td>
-                  <td>{{ record.wavelength.toFixed(2) }}</td>
-                  <td>{{ record.frequency.toFixed(1) }}</td>
-                  <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
-                  <td>{{ record.spacing.toFixed(4) }}</td>
-                  <td>{{ record.speed.toFixed(1) }}</td>
-                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删</button></td>
+                  <td class="col-index">{{ index + 1 }}</td>
+                  <td class="col-wavelength">{{ record.wavelength.toFixed(2) }}</td>
+                  <td class="col-frequency">{{ record.frequency.toFixed(1) }}</td>
+                  <td class="col-concentration">{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
+                  <td class="col-spacing">{{ record.spacing.toFixed(4) }}</td>
+                  <td class="col-speed">{{ record.speed.toFixed(1) }}</td>
+                  <td class="col-action"><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删</button></td>
                 </tr>
                 <tr v-if="getModeRecords('wavelength').length === 0">
                   <td colspan="7" class="empty-row">暂无数据</td>
@@ -270,7 +272,7 @@
           <div class="sub-table-header frequency-header">
             <div class="sub-table-info">
               <span class="sub-table-title">📡 超声频率影响实验数据</span>
-              <span class="sub-table-count">共 {{ getModeRecords('frequency').length }} 条记录</span>
+              <span class="sub-table-count">共 {{ getModeRecords('frequency').length }} 条</span>
             </div>
             <div class="sub-table-actions">
               <button class="btn-table-action" @click="exportModeExcel('frequency')">💾 导出</button>
@@ -278,8 +280,8 @@
               <button class="btn-table-action btn-zoom" @click="zoomModeTable('frequency')">🔍 放大</button>
             </div>
           </div>
-          <div class="records-table-container">
-            <table class="records-table records-table-frequency">
+          <div class="records-scroll-wrapper">
+            <table class="records-table">
               <colgroup>
                 <col style="width:60px;">
                 <col style="width:100px;">
@@ -287,28 +289,17 @@
                 <col style="width:120px;">
                 <col style="width:110px;">
                 <col style="width:110px;">
-                <col style="width:70px;">
+                <col style="width:60px;">
               </colgroup>
-              <thead>
-                <tr>
-                  <th>序号</th>
-                  <th>频率(MHz)</th>
-                  <th>波长(nm)</th>
-                  <th>浓度(wt%)</th>
-                  <th>间距(mm)</th>
-                  <th>声速(m/s)</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
               <tbody>
                 <tr v-for="(record, index) in getModeRecords('frequency')" :key="'f-' + index">
-                  <td>{{ index + 1 }}</td>
-                  <td>{{ record.frequency.toFixed(1) }}</td>
-                  <td>{{ record.wavelength.toFixed(2) }}</td>
-                  <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
-                  <td>{{ record.spacing.toFixed(4) }}</td>
-                  <td>{{ record.speed.toFixed(1) }}</td>
-                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删</button></td>
+                  <td class="col-index">{{ index + 1 }}</td>
+                  <td class="col-wavelength">{{ record.wavelength.toFixed(2) }}</td>
+                  <td class="col-frequency">{{ record.frequency.toFixed(1) }}</td>
+                  <td class="col-concentration">{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
+                  <td class="col-spacing">{{ record.spacing.toFixed(4) }}</td>
+                  <td class="col-speed">{{ record.speed.toFixed(1) }}</td>
+                  <td class="col-action"><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删</button></td>
                 </tr>
                 <tr v-if="getModeRecords('frequency').length === 0">
                   <td colspan="7" class="empty-row">暂无数据</td>
@@ -323,7 +314,7 @@
           <div class="sub-table-header concentration-header">
             <div class="sub-table-info">
               <span class="sub-table-title">📊 液体浓度影响实验数据</span>
-              <span class="sub-table-count">共 {{ getModeRecords('concentration').length }} 条记录</span>
+              <span class="sub-table-count">共 {{ getModeRecords('concentration').length }} 条</span>
             </div>
             <div class="sub-table-actions">
               <button class="btn-table-action" @click="exportModeExcel('concentration')">💾 导出</button>
@@ -331,37 +322,26 @@
               <button class="btn-table-action btn-zoom" @click="zoomModeTable('concentration')">🔍 放大</button>
             </div>
           </div>
-          <div class="records-table-container">
-            <table class="records-table records-table-concentration">
+          <div class="records-scroll-wrapper">
+            <table class="records-table">
               <colgroup>
                 <col style="width:60px;">
+                <col style="width:100px;">
+                <col style="width:100px;">
                 <col style="width:120px;">
-                <col style="width:100px;">
-                <col style="width:100px;">
                 <col style="width:110px;">
                 <col style="width:110px;">
-                <col style="width:70px;">
+                <col style="width:60px;">
               </colgroup>
-              <thead>
-                <tr>
-                  <th>序号</th>
-                  <th>浓度(wt%)</th>
-                  <th>波长(nm)</th>
-                  <th>频率(MHz)</th>
-                  <th>间距(mm)</th>
-                  <th>声速(m/s)</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
               <tbody>
                 <tr v-for="(record, index) in getModeRecords('concentration')" :key="'c-' + index">
-                  <td>{{ index + 1 }}</td>
-                  <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
-                  <td>{{ record.wavelength.toFixed(2) }}</td>
-                  <td>{{ record.frequency.toFixed(1) }}</td>
-                  <td>{{ record.spacing.toFixed(4) }}</td>
-                  <td>{{ record.speed.toFixed(1) }}</td>
-                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删</button></td>
+                  <td class="col-index">{{ index + 1 }}</td>
+                  <td class="col-wavelength">{{ record.wavelength.toFixed(2) }}</td>
+                  <td class="col-frequency">{{ record.frequency.toFixed(1) }}</td>
+                  <td class="col-concentration">{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
+                  <td class="col-spacing">{{ record.spacing.toFixed(4) }}</td>
+                  <td class="col-speed">{{ record.speed.toFixed(1) }}</td>
+                  <td class="col-action"><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删</button></td>
                 </tr>
                 <tr v-if="getModeRecords('concentration').length === 0">
                   <td colspan="7" class="empty-row">暂无数据</td>
@@ -568,8 +548,8 @@
             <thead>
               <tr>
                 <th>序号</th>
-                <th>频率(MHz)</th>
                 <th>波长(nm)</th>
+                <th>频率(MHz)</th>
                 <th>浓度(wt%)</th>
                 <th>间距(mm)</th>
                 <th>声速(m/s)</th>
@@ -578,8 +558,8 @@
             <tbody>
               <tr v-for="(record, index) in getModeRecords('frequency')" :key="'zf-' + index">
                 <td>{{ index + 1 }}</td>
-                <td>{{ record.frequency.toFixed(1) }}</td>
                 <td>{{ record.wavelength.toFixed(2) }}</td>
+                <td>{{ record.frequency.toFixed(1) }}</td>
                 <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
                 <td>{{ record.spacing.toFixed(4) }}</td>
                 <td>{{ record.speed.toFixed(1) }}</td>
@@ -594,9 +574,9 @@
             <thead>
               <tr>
                 <th>序号</th>
-                <th>浓度(wt%)</th>
                 <th>波长(nm)</th>
                 <th>频率(MHz)</th>
+                <th>浓度(wt%)</th>
                 <th>间距(mm)</th>
                 <th>声速(m/s)</th>
               </tr>
@@ -604,9 +584,9 @@
             <tbody>
               <tr v-for="(record, index) in getModeRecords('concentration')" :key="'zc-' + index">
                 <td>{{ index + 1 }}</td>
-                <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
                 <td>{{ record.wavelength.toFixed(2) }}</td>
                 <td>{{ record.frequency.toFixed(1) }}</td>
+                <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
                 <td>{{ record.spacing.toFixed(4) }}</td>
                 <td>{{ record.speed.toFixed(1) }}</td>
               </tr>
@@ -3285,8 +3265,8 @@ onUnmounted(() => {})
 }
 
 .right-panel {
-  width: 32%;
-  min-width: 520px;
+  width: 35%;
+  min-width: 620px;
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
@@ -3738,59 +3718,86 @@ onUnmounted(() => {})
   border-radius: 10px;
 }
 
-.records-table-container {
-  padding: 8px;
+/* 公共表头样式 */
+.records-common-header {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.common-header-inner {
+  display: flex;
+  width: 100%;
+}
+
+.common-col {
+  padding: 12px 8px;
+  text-align: center;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.col-index { flex: 0 0 60px; }
+.col-wavelength { flex: 0 0 100px; }
+.col-frequency { flex: 0 0 100px; }
+.col-concentration { flex: 0 0 120px; }
+.col-spacing { flex: 0 0 110px; }
+.col-speed { flex: 0 0 110px; }
+.col-action { flex: 0 0 60px; }
+
+/* 滚动容器 - 每个子表独立 */
+.records-scroll-wrapper {
   overflow-x: auto;
   overflow-y: auto;
-  max-height: 320px;
-  /* 自定义滚动条 */
+  max-height: 200px;
+  min-height: 80px;
   scrollbar-width: thin;
   scrollbar-color: #94a3b8 #f1f5f9;
 }
 
-.records-table-container::-webkit-scrollbar {
+.records-scroll-wrapper::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
-.records-table-container::-webkit-scrollbar-track {
+.records-scroll-wrapper::-webkit-scrollbar-track {
   background: #f1f5f9;
   border-radius: 5px;
 }
 
-.records-table-container::-webkit-scrollbar-thumb {
+.records-scroll-wrapper::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
   border-radius: 5px;
 }
 
-.records-table-container::-webkit-scrollbar-thumb:hover {
+.records-scroll-wrapper::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #64748b 0%, #475569 100%);
 }
 
 .records-table {
   width: 100%;
-  min-width: 680px;
+  min-width: 660px;
   border-collapse: collapse;
   font-size: 12px;
 }
 
-.records-table th {
-  background-color: #f1f5f9;
-  padding: 10px 12px;
-  text-align: center;
-  font-weight: bold;
-  color: #4b5563;
-  border-bottom: 2px solid #e5e7eb;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 .records-table td {
-  padding: 12px 10px;
+  padding: 10px 12px;
   text-align: center;
   border-bottom: 1px solid #f1f5f9;
   white-space: nowrap;
 }
+
+.records-table .col-index { width: 60px; }
+.records-table .col-wavelength { width: 100px; }
+.records-table .col-frequency { width: 100px; }
+.records-table .col-concentration { width: 120px; }
+.records-table .col-spacing { width: 110px; }
+.records-table .col-speed { width: 110px; }
+.records-table .col-action { width: 60px; }
 
 .records-table tr:hover {
   background-color: #f8fafc;
