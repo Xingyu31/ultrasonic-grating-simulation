@@ -226,16 +226,25 @@
             </div>
           </div>
           <div class="records-table-container">
-            <table class="records-table">
+            <table class="records-table records-table-wavelength">
+              <colgroup>
+                <col style="width:60px;">
+                <col style="width:100px;">
+                <col style="width:100px;">
+                <col style="width:120px;">
+                <col style="width:110px;">
+                <col style="width:110px;">
+                <col style="width:70px;">
+              </colgroup>
               <thead>
                 <tr>
-                  <th style="width:50px;">序号</th>
+                  <th>序号</th>
                   <th>波长(nm)</th>
                   <th>频率(MHz)</th>
                   <th>浓度(wt%)</th>
                   <th>间距(mm)</th>
                   <th>声速(m/s)</th>
-                  <th style="width:60px;">操作</th>
+                  <th>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -270,16 +279,25 @@
             </div>
           </div>
           <div class="records-table-container">
-            <table class="records-table">
+            <table class="records-table records-table-frequency">
+              <colgroup>
+                <col style="width:60px;">
+                <col style="width:100px;">
+                <col style="width:100px;">
+                <col style="width:120px;">
+                <col style="width:110px;">
+                <col style="width:110px;">
+                <col style="width:70px;">
+              </colgroup>
               <thead>
                 <tr>
-                  <th style="width:50px;">序号</th>
+                  <th>序号</th>
                   <th>频率(MHz)</th>
                   <th>波长(nm)</th>
                   <th>浓度(wt%)</th>
                   <th>间距(mm)</th>
                   <th>声速(m/s)</th>
-                  <th style="width:60px;">操作</th>
+                  <th>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -314,16 +332,25 @@
             </div>
           </div>
           <div class="records-table-container">
-            <table class="records-table">
+            <table class="records-table records-table-concentration">
+              <colgroup>
+                <col style="width:60px;">
+                <col style="width:120px;">
+                <col style="width:100px;">
+                <col style="width:100px;">
+                <col style="width:110px;">
+                <col style="width:110px;">
+                <col style="width:70px;">
+              </colgroup>
               <thead>
                 <tr>
-                  <th style="width:50px;">序号</th>
+                  <th>序号</th>
                   <th>浓度(wt%)</th>
                   <th>波长(nm)</th>
                   <th>频率(MHz)</th>
                   <th>间距(mm)</th>
                   <th>声速(m/s)</th>
-                  <th style="width:60px;">操作</th>
+                  <th>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -3258,7 +3285,8 @@ onUnmounted(() => {})
 }
 
 .right-panel {
-  width: 25%;
+  width: 32%;
+  min-width: 520px;
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
@@ -3711,33 +3739,57 @@ onUnmounted(() => {})
 }
 
 .records-table-container {
-  padding: 6px;
+  padding: 8px;
   overflow-x: auto;
   overflow-y: auto;
-  max-height: 280px;
+  max-height: 320px;
+  /* 自定义滚动条 */
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+
+.records-table-container::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.records-table-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 5px;
+}
+
+.records-table-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+  border-radius: 5px;
+}
+
+.records-table-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
 }
 
 .records-table {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
   font-size: 12px;
-  table-layout: fixed;
 }
 
 .records-table th {
   background-color: #f1f5f9;
-  padding: 8px 6px;
+  padding: 10px 12px;
   text-align: center;
   font-weight: bold;
   color: #4b5563;
   border-bottom: 2px solid #e5e7eb;
-  font-size: 11px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .records-table td {
-  padding: 10px 8px;
+  padding: 12px 10px;
   text-align: center;
   border-bottom: 1px solid #f1f5f9;
+  white-space: nowrap;
 }
 
 .records-table tr:hover {
