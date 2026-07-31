@@ -8,18 +8,19 @@
           <span class="app-icon">🔬</span>
           <div class="title-text">
             <span class="app-title">超声光栅虚拟仿真实验平台</span>
-            <span v-if="currentView === 'simulation'" class="mode-label">实物仪器实操仿真模式</span>
+            <span v-if="currentView === 'simulation' && simulationMode === '3d'" class="mode-label">实物仪器实操仿真模式 (3D)</span>
+            <span v-if="currentView === 'simulation' && simulationMode === '2d'" class="mode-label">实物仪器实操仿真模式 (2D - 存档)</span>
             <span v-if="currentView === 'archiveMeasure'" class="mode-label">🔍 未知浓度测量模式</span>
           </div>
           <span class="version-badge">V3.0</span>
         </div>
         <div class="title-right">
           <button class="nav-btn" :class="{ active: currentView === 'measurement' }"
-                  @click="currentView = 'measurement'">
+                  @click="goToMeasurement">
             <span>📊</span> 测量界面
           </button>
           <button class="nav-btn" :class="{ active: currentView === 'simulation' }"
-                  @click="currentView = 'simulation'">
+                  @click="goToSimulation3D">
             <span>🔧</span> 仪器仿真
           </button>
           <button class="archive-btn" @click="openArchiveList">
@@ -43,14 +44,14 @@
                            @update:mode="setExperimentMode" />
         </KeepAlive>
         
-        <SimulationView v-if="currentView === 'simulation' && !selectedArchive"
+        <SimulationView v-if="currentView === 'simulation' && simulationMode === '3d'"
                         :params="params"
                         :experimentMode="experimentMode"
                         @update:params="updateParams"
                         @update:mode="setExperimentMode"
                         @addRecord="handleAddRecord"
                         @switch-view="currentView = $event" />
-        <ArchiveSimulationView v-else-if="currentView === 'simulation' && selectedArchive"
+        <ArchiveSimulationView v-else-if="currentView === 'simulation' && simulationMode === '2d'"
                                :params="params"
                                :experimentMode="experimentMode"
                                @update:params="updateParams"
@@ -92,6 +93,8 @@ const showReport = ref(false)
 const showArchiveList = ref(false)
 const experimentMode = ref('wavelength')
 const selectedArchive = ref(null)
+// 明确区分仿真入口：'3d' = 测量界面进入，'2d' = 存档测量界面进入
+const simulationMode = ref('3d')
 
 const startExperiment = () => {
   experimentStarted.value = true
@@ -160,6 +163,20 @@ const setExperimentMode = (mode) => {
   experimentMode.value = mode
 }
 
+// 从测量界面进入 3D 仿真
+const goToSimulation3D = () => {
+  simulationMode.value = '3d'
+  selectedArchive.value = null
+  currentView.value = 'simulation'
+}
+
+// 返回测量界面（清除存档状态，确保 3D/2D 完全隔离）
+const goToMeasurement = () => {
+  simulationMode.value = '3d'
+  selectedArchive.value = null
+  currentView.value = 'measurement'
+}
+
 const openReport = () => {
   showReport.value = true
 }
@@ -182,19 +199,25 @@ const selectArchive = (archive) => {
   currentView.value = 'archiveMeasure'
 }
 
+// 退出存档测量 → 回到测量界面（3D 模式）
 const exitArchiveMeasure = () => {
-  currentView.value = 'simulation'
+  simulationMode.value = '3d'
   selectedArchive.value = null
+  currentView.value = 'measurement'
 }
 
+// 从存档测量界面进入 2D 仿真
 const openInstrumentFromArchive = () => {
+  simulationMode.value = '2d'
   currentView.value = 'simulation'
 }
 
+// 从 2D 仿真返回存档测量界面
 const returnToArchiveMeasure = (fromSimulationParams) => {
   if (fromSimulationParams) {
     Object.assign(params, fromSimulationParams)
   }
+  simulationMode.value = '2d'
   currentView.value = 'archiveMeasure'
 }
 </script>
