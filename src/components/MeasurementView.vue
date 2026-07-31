@@ -211,52 +211,116 @@
             <button class="btn-save-archive" @click="saveToArchive">📁 创建存档</button>
           </div>
         </div>
-        <div class="record-tabs">
-          <button class="record-tab" :class="{ active: recordTab === 'all' }" @click="recordTab = 'all'">
-            📋 全部 <span class="tab-count">({{ modeRecordCounts.all }})</span>
-          </button>
-          <button class="record-tab" :class="{ active: recordTab === 'wavelength' }" @click="recordTab = 'wavelength'">
-            🌈 波长影响 <span class="tab-count">({{ modeRecordCounts.wavelength }})</span>
-          </button>
-          <button class="record-tab" :class="{ active: recordTab === 'frequency' }" @click="recordTab = 'frequency'">
-            📡 频率影响 <span class="tab-count">({{ modeRecordCounts.frequency }})</span>
-          </button>
-          <button class="record-tab" :class="{ active: recordTab === 'concentration' }" @click="recordTab = 'concentration'">
-            📊 浓度影响 <span class="tab-count">({{ modeRecordCounts.concentration }})</span>
-          </button>
+        
+        <!-- 🌈 波长影响记录表 -->
+        <div class="sub-table-section">
+          <div class="sub-table-header wavelength-header">
+            <span class="sub-table-title">🌈 光波长影响实验数据</span>
+            <span class="sub-table-count">共 {{ getModeRecords('wavelength').length }} 条记录</span>
+          </div>
+          <div class="records-table-container" @dblclick="showTableZoom = true">
+            <table class="records-table">
+              <thead>
+                <tr>
+                  <th>序号</th>
+                  <th>波长(nm)</th>
+                  <th>频率(MHz)</th>
+                  <th>浓度(wt%)</th>
+                  <th>间距(mm)</th>
+                  <th>声速(m/s)</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(record, index) in getModeRecords('wavelength')" :key="'w-' + index">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ record.wavelength.toFixed(2) }}</td>
+                  <td>{{ record.frequency.toFixed(1) }}</td>
+                  <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
+                  <td>{{ record.spacing.toFixed(4) }}</td>
+                  <td>{{ record.speed.toFixed(1) }}</td>
+                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删除</button></td>
+                </tr>
+                <tr v-if="getModeRecords('wavelength').length === 0">
+                  <td colspan="7" class="empty-row">暂无数据，请选择光波长影响实验模式进行测量</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="records-table-container" @dblclick="showTableZoom = true">
-          <table class="records-table">
-            <thead>
-              <tr>
-                <th>序号</th>
-                <th>模式</th>
-                <th>波长(nm)</th>
-                <th>频率(MHz)</th>
-                <th>温度(°C)</th>
-                <th>浓度(wt%)</th>
-                <th>间距(mm)</th>
-                <th>声速(m/s)</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(record, index) in filteredRecords" :key="index">
-                <td>{{ index + 1 }}</td>
-                <td><span class="mode-badge-small" :class="record.experimentMode">{{ getModeLabel(record.experimentMode) }}</span></td>
-                <td>{{ record.wavelength.toFixed(2) }}</td>
-                <td>{{ record.frequency.toFixed(1) }}</td>
-                <td>{{ record.temperature ? record.temperature.toFixed(1) : '-' }}</td>
-                <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
-                <td>{{ record.spacing.toFixed(4) }}</td>
-                <td>{{ record.speed.toFixed(1) }}</td>
-                <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删除</button></td>
-              </tr>
-              <tr v-if="filteredRecords.length === 0">
-                <td colspan="9" class="empty-row">暂无数据，请先测量</td>
-              </tr>
-            </tbody>
-          </table>
+
+        <!-- 📡 频率影响记录表 -->
+        <div class="sub-table-section">
+          <div class="sub-table-header frequency-header">
+            <span class="sub-table-title">📡 超声频率影响实验数据</span>
+            <span class="sub-table-count">共 {{ getModeRecords('frequency').length }} 条记录</span>
+          </div>
+          <div class="records-table-container" @dblclick="showTableZoom = true">
+            <table class="records-table">
+              <thead>
+                <tr>
+                  <th>序号</th>
+                  <th>频率(MHz)</th>
+                  <th>波长(nm)</th>
+                  <th>浓度(wt%)</th>
+                  <th>间距(mm)</th>
+                  <th>声速(m/s)</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(record, index) in getModeRecords('frequency')" :key="'f-' + index">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ record.frequency.toFixed(1) }}</td>
+                  <td>{{ record.wavelength.toFixed(2) }}</td>
+                  <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
+                  <td>{{ record.spacing.toFixed(4) }}</td>
+                  <td>{{ record.speed.toFixed(1) }}</td>
+                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删除</button></td>
+                </tr>
+                <tr v-if="getModeRecords('frequency').length === 0">
+                  <td colspan="7" class="empty-row">暂无数据，请选择超声频率影响实验模式进行测量</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 📊 浓度影响记录表 -->
+        <div class="sub-table-section">
+          <div class="sub-table-header concentration-header">
+            <span class="sub-table-title">📊 液体浓度影响实验数据</span>
+            <span class="sub-table-count">共 {{ getModeRecords('concentration').length }} 条记录</span>
+          </div>
+          <div class="records-table-container" @dblclick="showTableZoom = true">
+            <table class="records-table">
+              <thead>
+                <tr>
+                  <th>序号</th>
+                  <th>浓度(wt%)</th>
+                  <th>波长(nm)</th>
+                  <th>频率(MHz)</th>
+                  <th>间距(mm)</th>
+                  <th>声速(m/s)</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(record, index) in getModeRecords('concentration')" :key="'c-' + index">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
+                  <td>{{ record.wavelength.toFixed(2) }}</td>
+                  <td>{{ record.frequency.toFixed(1) }}</td>
+                  <td>{{ record.spacing.toFixed(4) }}</td>
+                  <td>{{ record.speed.toFixed(1) }}</td>
+                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删除</button></td>
+                </tr>
+                <tr v-if="getModeRecords('concentration').length === 0">
+                  <td colspan="7" class="empty-row">暂无数据，请选择液体浓度影响实验模式进行测量</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
       
@@ -538,6 +602,19 @@ const currentModeInfo = computed(() => {
 const experimentVs = ref(null)
 
 const analysisResult = ref(null)
+
+const getModeRecords = (modeId) => {
+  if (modeId === 'wavelength') {
+    return (props.records || []).filter(r => r.experimentMode === 'wavelength')
+  }
+  if (modeId === 'frequency') {
+    return (props.records || []).filter(r => r.experimentMode === 'frequency')
+  }
+  if (modeId === 'concentration') {
+    return (props.records || []).filter(r => r.experimentMode === 'concentration')
+  }
+  return []
+}
 
 const filteredRecords = computed(() => {
   if (recordTab.value === 'all') {
@@ -3234,9 +3311,10 @@ onUnmounted(() => {})
 
 .records-section {
   flex: 1;
-  min-height: 200px;
+  min-height: 500px;
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
 .btn-clear {
@@ -3393,12 +3471,53 @@ onUnmounted(() => {})
   border-color: #7c3aed;
 }
 
+.sub-table-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.sub-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.wavelength-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.frequency-header {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.concentration-header {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.sub-table-title {
+  font-size: 13px;
+}
+
+.sub-table-count {
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
 .records-table-container {
-  flex: 1;
-  padding: 10px;
+  padding: 8px;
   overflow-x: auto;
   overflow-y: auto;
-  max-height: 300px;
+  max-height: 200px;
 }
 
 .records-table {
