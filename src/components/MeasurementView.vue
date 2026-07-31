@@ -3280,21 +3280,21 @@ onUnmounted(() => {})
   flex-shrink: 0;
 }
 
-.right-panel > .records-section {
-  flex-shrink: 0;
-  min-height: 700px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 8px 8px 8px;
-}
-
 .right-panel > .results-section {
   flex-shrink: 0;
 }
 
 .right-panel > .analysis-section {
   flex-shrink: 0;
+}
+
+.right-panel > .records-section {
+  flex-shrink: 0;
+  min-height: 750px;
+}
+
+.records-section .sub-table-section {
+  margin: 6px 0;
 }
 
 .measurement-section {
@@ -3506,7 +3506,7 @@ onUnmounted(() => {})
   border-radius: 8px;
   overflow: hidden;
   background: white;
-  min-height: 220px;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
 }
