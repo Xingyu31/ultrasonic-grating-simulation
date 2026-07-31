@@ -3276,17 +3276,24 @@ onUnmounted(() => {})
   overflow-x: hidden;
 }
 
-.right-panel > * {
+.right-panel > .measurement-section {
   flex-shrink: 0;
 }
 
 .right-panel > .records-section {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  flex-shrink: 0;
+  min-height: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 8px 8px 8px;
 }
 
 .right-panel > .results-section {
+  flex-shrink: 0;
+}
+
+.right-panel > .analysis-section {
   flex-shrink: 0;
 }
 
@@ -3494,23 +3501,12 @@ onUnmounted(() => {})
   transition: all 0.3s;
 }
 
-.records-section {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 8px;
-  overflow: hidden;
-}
-
 .sub-table-section {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   overflow: hidden;
   background: white;
-  flex: 1;
-  min-height: 0;
+  min-height: 220px;
   display: flex;
   flex-direction: column;
 }
