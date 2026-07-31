@@ -32,13 +32,16 @@
             </div>
           </div>
           
-          <div class="pdf-section" v-for="(mode, index) in reportModes" :key="mode.id">
+          <div class="pdf-section" v-for="(mode, index) in reportModes" :key="mode.id" :id="'section-' + mode.id">
             <div class="section-header">
               <span class="section-number">第{{ index + 1 }}部分</span>
               <h2 class="section-title">{{ mode.title }}</h2>
-              <span class="section-status" :class="getSectionStatus(mode.id)">
-                {{ getSectionStatusText(mode.id) }}
-              </span>
+              <div class="section-actions">
+                <span class="section-status" :class="getSectionStatus(mode.id)">
+                  {{ getSectionStatusText(mode.id) }}
+                </span>
+                <button class="btn-save-section" @click="saveSection(mode)">💾 保存此部分</button>
+              </div>
             </div>
             
             <div class="section-content">
@@ -507,6 +510,46 @@ const getFlowchartDesc = (modeId) => {
   }
 }
 
+const getModeFormula = (modeId) => {
+  const f = props.params.frequency || 8.0
+  const c = props.params.concentration || 7.74
+  const wl = props.params.wavelength || 600.0
+  const distance = props.params.distance || 0.3
+  
+  if (modeId === 'wavelength') {
+    return `声速公式：v = 2kλfL / D = 2 × 1 × λ × ${(f * 1e6).toFixed(0)} × ${(distance * 1000).toFixed(0)} / D`
+  }
+  if (modeId === 'frequency') {
+    return `声速公式：v = 2kλfL / D = 2 × 1 × ${wl.toFixed(1)} × f × ${(distance * 1000).toFixed(0)} / D`
+  }
+  if (modeId === 'concentration') {
+    const liquidTypeId = props.params.liquidTypeId || 'nacl'
+    const liquidData = liquidTypesData[liquidTypeId] || liquidTypesData['nacl']
+    return `声速公式：v = ${liquidData.baseSpeed} + ${liquidData.speedFactor} × c`
+  }
+  return ''
+}
+
+const getModePrinciple = (modeId) => {
+  const f = props.params.frequency || 8.0
+  const c = props.params.concentration || 7.74
+  const wl = props.params.wavelength || 600.0
+  const liquidName = props.params.liquidType || '氯化钠溶液'
+  
+  if (modeId === 'wavelength') {
+    return `根据超声光栅衍射原理，光栅方程为 λₛsinθₖ = kλ，当θₖ很小时，sinθₖ ≈ tanθₖ = Dₖ/(2L)，可得 D = 2kλL/λₛ。由于λₛ = v/f（v为声速，f为超声频率），代入得 D = 2kλLf/v。实验中固定频率 f = ${f.toFixed(1)} MHz，浓度 c = ${c.toFixed(2)} wt%（${liquidName}），改变入射光波长 λ，测量条纹间距 D，验证声速 v 与波长无关。`
+  }
+  if (modeId === 'frequency') {
+    return `根据超声光栅衍射原理，光栅常数λₛ = v/f，代入光栅方程得 D = 2kλLf/v。实验中固定波长 λ = ${wl.toFixed(1)} nm，浓度 c = ${c.toFixed(2)} wt%（${liquidName}），改变超声频率 f，测量条纹间距 D，验证声速 v 与频率无关。`
+  }
+  if (modeId === 'concentration') {
+    const liquidTypeId = props.params.liquidTypeId || 'nacl'
+    const liquidData = liquidTypesData[liquidTypeId] || liquidTypesData['nacl']
+    return `液体中的声速与浓度有关，当浓度增加时，液体密度和弹性模量发生变化，导致声速改变。实验表明，在一定浓度范围内，声速与浓度呈线性关系：v = v₀ + kc，其中v₀为基准声速（${liquidData.baseSpeed} m/s），k为比例系数（约${liquidData.speedFactor} m/s·wt%）。实验中固定波长 λ = ${wl.toFixed(1)} nm，频率 f = ${f.toFixed(1)} MHz，改变浓度 c，测量声速 v。`
+  }
+  return ''
+}
+
 const reportModes = [
   {
     id: 'wavelength',
@@ -517,8 +560,8 @@ const reportModes = [
       '学会用线性拟合与统计检验处理实验数据',
       '研究固定超声频率和液体浓度时，入射光波长与衍射条纹间距的关系，验证声速与波长无关'
     ],
-    principle: '根据超声光栅衍射原理，光栅方程为 λₛsinθₖ = kλ，当θₖ很小时，sinθₖ ≈ tanθₖ = Dₖ/(2L)，可得 D = 2kλL/λₛ。由于λₛ = v/f（v为声速，f为超声频率），代入得 D = 2kλLf/v。当f和v固定时，D与λ呈严格正比例关系，λ/D = v/(2kLf) 为常数。',
-    formula: '声速公式：v = 2kλfL / D',
+    principle: computed(() => getModePrinciple('wavelength')),
+    formula: computed(() => getModeFormula('wavelength')),
     xLabel: '波长 (nm)',
     yLabel: '条纹间距 (mm)',
     xField: 'wavelength',
@@ -533,8 +576,8 @@ const reportModes = [
       '学会用线性拟合与统计检验处理实验数据',
       '研究固定入射光波长和液体浓度时，超声频率与衍射条纹间距的关系，验证声速与频率无关'
     ],
-    principle: '根据超声光栅衍射原理，光栅常数λₛ = v/f，代入光栅方程得 D = 2kλLf/v。当λ和v固定时，D与f呈严格正比例关系，f/D = v/(2kλL) 为常数。通过改变超声频率，测量对应的衍射条纹间距，验证声速保持恒定。',
-    formula: '声速公式：v = 2kλfL / D',
+    principle: computed(() => getModePrinciple('frequency')),
+    formula: computed(() => getModeFormula('frequency')),
     xLabel: '频率 (MHz)',
     yLabel: '条纹间距 (mm)',
     xField: 'frequency',
@@ -549,16 +592,8 @@ const reportModes = [
       '学会用线性拟合与统计检验处理实验数据',
       '研究固定入射光波长和超声频率时，液体浓度与声速的关系，验证声速随浓度线性变化'
     ],
-    principle: computed(() => {
-      const liquidTypeId = props.params.liquidTypeId || 'nacl'
-      const liquidData = liquidTypesData[liquidTypeId] || liquidTypesData['nacl']
-      return `液体中的声速与浓度有关，当浓度增加时，液体密度和弹性模量发生变化，导致声速改变。实验表明，在一定浓度范围内，声速与浓度呈线性关系：v = v₀ + kc，其中v₀为基准声速（${liquidData.baseSpeed} m/s），k为比例系数（约${liquidData.speedFactor} m/s·wt%）。`
-    }),
-    formula: computed(() => {
-      const liquidTypeId = props.params.liquidTypeId || 'nacl'
-      const liquidData = liquidTypesData[liquidTypeId] || liquidTypesData['nacl']
-      return `声速公式：v = ${liquidData.baseSpeed} + ${liquidData.speedFactor} × c`
-    }),
+    principle: computed(() => getModePrinciple('concentration')),
+    formula: computed(() => getModeFormula('concentration')),
     xLabel: '浓度 (wt%)',
     yLabel: '条纹间距 (mm)',
     xField: 'concentration',
@@ -703,6 +738,33 @@ const saveReport = () => {
   a.download = `超声光栅实验报告_${activeTab.value === 'temperature' ? '温度调节' : '主实验'}_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.html`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+const saveSection = (mode) => {
+  const sectionElement = document.getElementById(`section-${mode.id}`)
+  if (!sectionElement) return
+  
+  const sectionContent = sectionElement.outerHTML
+  const wrapper = document.createElement('div')
+  wrapper.innerHTML = `
+    <div style="font-family: 'Microsoft YaHei', sans-serif; padding: 40px;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #1e40af; margin: 0;">超声光栅衍射虚拟仿真实验报告</h1>
+        <p style="color: #64748b; margin: 10px 0 0;">生成时间: ${new Date().toLocaleString('zh-CN')}</p>
+      </div>
+      ${sectionContent}
+    </div>
+  `
+  
+  const blob = new Blob([wrapper.innerHTML], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${mode.title}_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.html`
+  a.click()
+  URL.revokeObjectURL(url)
+  
+  ElMessage.success(`"${mode.title}"部分保存成功！`)
 }
 
 const getTemperatureRecords = () => {
@@ -1056,12 +1118,42 @@ loadArchives()
   margin: 0;
 }
 
-.section-status {
+.section-actions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-status {
   font-size: 13px;
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 12px;
+}
+
+.btn-save-section {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-save-section:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-save-section:active {
+  transform: translateY(0);
 }
 
 .section-status.completed {

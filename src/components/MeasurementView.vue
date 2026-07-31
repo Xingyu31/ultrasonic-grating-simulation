@@ -211,11 +211,26 @@
             <button class="btn-save-archive" @click="saveToArchive">📁 创建存档</button>
           </div>
         </div>
+        <div class="record-tabs">
+          <button class="record-tab" :class="{ active: recordTab === 'all' }" @click="recordTab = 'all'">
+            📋 全部 <span class="tab-count">({{ modeRecordCounts.all }})</span>
+          </button>
+          <button class="record-tab" :class="{ active: recordTab === 'wavelength' }" @click="recordTab = 'wavelength'">
+            🌈 波长影响 <span class="tab-count">({{ modeRecordCounts.wavelength }})</span>
+          </button>
+          <button class="record-tab" :class="{ active: recordTab === 'frequency' }" @click="recordTab = 'frequency'">
+            📡 频率影响 <span class="tab-count">({{ modeRecordCounts.frequency }})</span>
+          </button>
+          <button class="record-tab" :class="{ active: recordTab === 'concentration' }" @click="recordTab = 'concentration'">
+            📊 浓度影响 <span class="tab-count">({{ modeRecordCounts.concentration }})</span>
+          </button>
+        </div>
         <div class="records-table-container" @dblclick="showTableZoom = true">
           <table class="records-table">
             <thead>
               <tr>
                 <th>序号</th>
+                <th>模式</th>
                 <th>波长(nm)</th>
                 <th>频率(MHz)</th>
                 <th>温度(°C)</th>
@@ -226,18 +241,19 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(record, index) in records" :key="index">
+              <tr v-for="(record, index) in filteredRecords" :key="index">
                 <td>{{ index + 1 }}</td>
+                <td><span class="mode-badge-small" :class="record.experimentMode">{{ getModeLabel(record.experimentMode) }}</span></td>
                 <td>{{ record.wavelength.toFixed(2) }}</td>
                 <td>{{ record.frequency.toFixed(1) }}</td>
                 <td>{{ record.temperature ? record.temperature.toFixed(1) : '-' }}</td>
                 <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
                 <td>{{ record.spacing.toFixed(4) }}</td>
                 <td>{{ record.speed.toFixed(1) }}</td>
-                <td><button class="btn-delete" @click.stop="deleteRecord(index)">删除</button></td>
+                <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删除</button></td>
               </tr>
-              <tr v-if="records.length === 0">
-                <td colspan="8" class="empty-row">暂无数据，请先测量</td>
+              <tr v-if="filteredRecords.length === 0">
+                <td colspan="9" class="empty-row">暂无数据，请先测量</td>
               </tr>
             </tbody>
           </table>
@@ -277,21 +293,32 @@
           <span class="section-title">分析与验证</span>
           <button class="btn-analyze" @click="performAnalysis">执行验证</button>
         </div>
+        <div class="analysis-tabs">
+          <button class="analysis-tab" :class="{ active: analysisTab === 'wavelength' }" @click="analysisTab = 'wavelength'">
+            🌈 波长影响
+          </button>
+          <button class="analysis-tab" :class="{ active: analysisTab === 'frequency' }" @click="analysisTab = 'frequency'">
+            📡 频率影响
+          </button>
+          <button class="analysis-tab" :class="{ active: analysisTab === 'concentration' }" @click="analysisTab = 'concentration'">
+            📊 浓度影响
+          </button>
+        </div>
         <div class="analysis-content">
-          <div v-if="analysisResult" class="analysis-result">
+          <div v-if="filteredAnalysisResult" class="analysis-result">
             <div class="analysis-summary">
-              <div class="mode-title">📋 {{ analysisResult.mode }}</div>
+              <div class="mode-title">📋 {{ filteredAnalysisResult.mode }}</div>
               <div class="summary-item">
                 <span class="summary-label">实验声速</span>
-                <span class="summary-value">{{ analysisResult.experimentalSpeed.toFixed(2) }} m/s</span>
+                <span class="summary-value">{{ filteredAnalysisResult.experimentalSpeed.toFixed(2) }} m/s</span>
               </div>
               <div class="summary-item">
                 <span class="summary-label">理论声速</span>
-                <span class="summary-value">{{ analysisResult.theoreticalSpeed.toFixed(2) }} m/s</span>
+                <span class="summary-value">{{ filteredAnalysisResult.theoreticalSpeed.toFixed(2) }} m/s</span>
               </div>
               <div class="summary-item">
                 <span class="summary-label">相对误差</span>
-                <span class="summary-value" :class="{ 'error-high': Math.abs(analysisResult.relativeError) > 5 }">{{ analysisResult.relativeError.toFixed(2) }}%</span>
+                <span class="summary-value" :class="{ 'error-high': Math.abs(filteredAnalysisResult.relativeError) > 5 }">{{ filteredAnalysisResult.relativeError.toFixed(2) }}%</span>
               </div>
             </div>
             <div class="analysis-details">
@@ -300,49 +327,49 @@
                 <div class="stat-grid">
                   <div class="stat-item">
                     <span class="stat-label">数据点数</span>
-                    <span class="stat-value">{{ analysisResult.dataPoints }}</span>
+                    <span class="stat-value">{{ filteredAnalysisResult.dataPoints }}</span>
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">标准差</span>
-                    <span class="stat-value">±{{ analysisResult.stdDev.toFixed(2) }}</span>
+                    <span class="stat-value">±{{ filteredAnalysisResult.stdDev.toFixed(2) }}</span>
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">变异系数</span>
-                    <span class="stat-value">{{ analysisResult.cv.toFixed(3) }}%</span>
+                    <span class="stat-value">{{ filteredAnalysisResult.cv.toFixed(3) }}%</span>
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">中位数</span>
-                    <span class="stat-value">{{ analysisResult.median.toFixed(2) }}</span>
+                    <span class="stat-value">{{ filteredAnalysisResult.median.toFixed(2) }}</span>
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">极差</span>
-                    <span class="stat-value">{{ analysisResult.range.toFixed(2) }}</span>
+                    <span class="stat-value">{{ filteredAnalysisResult.range.toFixed(2) }}</span>
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">四分位距</span>
-                    <span class="stat-value">{{ analysisResult.iqr.toFixed(2) }}</span>
+                    <span class="stat-value">{{ filteredAnalysisResult.iqr.toFixed(2) }}</span>
                   </div>
                 </div>
-                <div class="consistency-badge" :class="analysisResult.consistency.toLowerCase()">
-                  数据一致性: {{ analysisResult.consistency }}
+                <div class="consistency-badge" :class="filteredAnalysisResult.consistency.toLowerCase()">
+                  数据一致性: {{ filteredAnalysisResult.consistency }}
                 </div>
-                <div v-if="analysisResult.outlierCount > 0" class="outlier-warning">
-                  ⚠️ 检测到 {{ analysisResult.outlierCount }} 个异常值
+                <div v-if="filteredAnalysisResult.outlierCount > 0" class="outlier-warning">
+                  ⚠️ 检测到 {{ filteredAnalysisResult.outlierCount }} 个异常值
                 </div>
                 <div class="normal-range">
-                  正常范围: {{ analysisResult.normalRangeLower.toFixed(2) }} ~ {{ analysisResult.normalRangeUpper.toFixed(2) }} m/s
+                  正常范围: {{ filteredAnalysisResult.normalRangeLower.toFixed(2) }} ~ {{ filteredAnalysisResult.normalRangeUpper.toFixed(2) }} m/s
                 </div>
               </div>
               <div class="detail-section">
                 <h4>📈 拟合参数验证</h4>
-                <div v-if="analysisResult.analysisType === 'constantSpeed'" class="fit-params">
+                <div v-if="filteredAnalysisResult.analysisType === 'constantSpeed'" class="fit-params">
                   <div class="fit-param-item">
                     <span class="fit-param-label">验证指标</span>
                     <span class="fit-param-value">声速恒定（标准差 < 6 m/s）</span>
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">当前标准差</span>
-                    <span class="fit-param-value" :class="{ 'good': analysisResult.stdDev < 6, 'bad': analysisResult.stdDev >= 6 }">{{ analysisResult.stdDev.toFixed(2) }} m/s</span>
+                    <span class="fit-param-value" :class="{ 'good': filteredAnalysisResult.stdDev < 6, 'bad': filteredAnalysisResult.stdDev >= 6 }">{{ filteredAnalysisResult.stdDev.toFixed(2) }} m/s</span>
                   </div>
                   <div class="fit-formula">
                     理论公式: v = 2kλfL / D（波长/频率变化，v恒定）
@@ -351,40 +378,40 @@
                 <div v-else class="fit-params">
                   <div class="fit-param-item">
                     <span class="fit-param-label">拟合斜率</span>
-                    <span class="fit-param-value">{{ analysisResult.fitSlope.toFixed(2) }}（理论值: {{ analysisResult.theoreticalSlope }}）</span>
+                    <span class="fit-param-value">{{ filteredAnalysisResult.fitSlope.toFixed(2) }}（理论值: {{ filteredAnalysisResult.theoreticalSlope }}）</span>
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">斜率误差</span>
-                    <span class="fit-param-value" :class="{ 'good': Math.abs(analysisResult.slopeError) < 10, 'bad': Math.abs(analysisResult.slopeError) >= 10 }">{{ analysisResult.slopeError.toFixed(2) }}%</span>
+                    <span class="fit-param-value" :class="{ 'good': Math.abs(filteredAnalysisResult.slopeError) < 10, 'bad': Math.abs(filteredAnalysisResult.slopeError) >= 10 }">{{ filteredAnalysisResult.slopeError.toFixed(2) }}%</span>
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">拟合截距</span>
-                    <span class="fit-param-value">{{ analysisResult.fitIntercept.toFixed(1) }}（理论值: {{ analysisResult.theoreticalIntercept }}）</span>
+                    <span class="fit-param-value">{{ filteredAnalysisResult.fitIntercept.toFixed(1) }}（理论值: {{ filteredAnalysisResult.theoreticalIntercept }}）</span>
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">截距误差</span>
-                    <span class="fit-param-value" :class="{ 'good': Math.abs(analysisResult.interceptError) < 2, 'bad': Math.abs(analysisResult.interceptError) >= 2 }">{{ analysisResult.interceptError.toFixed(2) }}%</span>
+                    <span class="fit-param-value" :class="{ 'good': Math.abs(filteredAnalysisResult.interceptError) < 2, 'bad': Math.abs(filteredAnalysisResult.interceptError) >= 2 }">{{ filteredAnalysisResult.interceptError.toFixed(2) }}%</span>
                   </div>
                   <div class="fit-formula">
-                    理论公式: v = {{ analysisResult.theoreticalIntercept }} + {{ analysisResult.theoreticalSlope }} × c
+                    理论公式: v = {{ filteredAnalysisResult.theoreticalIntercept }} + {{ filteredAnalysisResult.theoreticalSlope }} × c
                   </div>
                 </div>
               </div>
               <div class="detail-section">
                 <h4>✅ 验证结果</h4>
-                <p class="validation-result" :class="analysisResult.validationPass ? 'pass' : 'fail'">
-                  {{ analysisResult.validationPass ? '✓ 实验结果符合理论预期' : '✗ 实验结果与理论偏差较大' }}
+                <p class="validation-result" :class="filteredAnalysisResult.validationPass ? 'pass' : 'fail'">
+                  {{ filteredAnalysisResult.validationPass ? '✓ 实验结果符合理论预期' : '✗ 实验结果与理论偏差较大' }}
                 </p>
                 <div class="suggestion-box">
                   <span class="suggestion-icon">💡</span>
-                  <span class="suggestion-text">{{ analysisResult.suggestion }}</span>
+                  <span class="suggestion-text">{{ filteredAnalysisResult.suggestion }}</span>
                 </div>
               </div>
             </div>
           </div>
           <div v-else class="no-analysis-hint">
             <span>🔍</span>
-            <p>请先测量至少3组数据</p>
+            <p>请先测量至少3组"{{ getModeLabel(analysisTab) }}"数据</p>
             <p>点击"执行验证"进行数据分析</p>
           </div>
         </div>
@@ -472,6 +499,8 @@ const showTempFitModal = ref(false)
 
 const fitTab = ref('frequency')
 const paramTab = ref('liquid')
+const recordTab = ref('all')
+const analysisTab = ref('wavelength')
 
 const currentModeInfo = computed(() => {
   switch (fitTab.value) {
@@ -509,6 +538,31 @@ const currentModeInfo = computed(() => {
 const experimentVs = ref(null)
 
 const analysisResult = ref(null)
+
+const filteredRecords = computed(() => {
+  if (recordTab.value === 'all') {
+    return props.records || []
+  }
+  return (props.records || []).filter(r => r.experimentMode === recordTab.value)
+})
+
+const modeRecordCounts = computed(() => {
+  const records = props.records || []
+  return {
+    all: records.length,
+    wavelength: records.filter(r => r.experimentMode === 'wavelength').length,
+    frequency: records.filter(r => r.experimentMode === 'frequency').length,
+    concentration: records.filter(r => r.experimentMode === 'concentration').length
+  }
+})
+
+const filteredAnalysisResult = computed(() => {
+  if (!analysisResult.value) return null
+  if (analysisResult.value.mode === analysisTab.value) {
+    return analysisResult.value
+  }
+  return null
+})
 
 const isPureWater = computed(() => localParams.liquidTypeId === 'pure-water')
 
@@ -1370,13 +1424,13 @@ const performFit = () => {
 }
 
 const performAnalysis = () => {
-  if (!props.records || props.records.length < 3) {
-    showNotification('请至少测量3组数据后再进行分析', 'warning')
+  const mode = analysisTab.value
+  const records = (props.records || []).filter(r => r.experimentMode === mode)
+  
+  if (records.length < 3) {
+    showNotification(`请至少测量3组"${getModeLabel(mode)}"数据后再进行分析`, 'warning')
     return
   }
-  
-  const mode = fitTab.value
-  const records = props.records
   
   let analysisResultData
   
@@ -1431,7 +1485,7 @@ const performAnalysis = () => {
     }
     
     analysisResultData = {
-      mode: mode === 'wavelength' ? '光波长影响' : '超声频率影响',
+      mode: mode === 'wavelength' ? '🌈 光波长影响' : '📡 超声频率影响',
       analysisType: 'constantSpeed',
       experimentalSpeed,
       theoreticalSpeed,
@@ -1540,7 +1594,7 @@ const performAnalysis = () => {
     const avgRelativeError = ((slopeError + interceptError) / 2)
     
     analysisResultData = {
-      mode: '液体浓度影响',
+      mode: '📊 液体浓度影响',
       analysisType: 'linearFit',
       experimentalSpeed: avgSpeed,
       theoreticalSpeed: theoreticalIntercept + slope * props.params.concentration,
@@ -2461,6 +2515,20 @@ const saveToArchive = () => {
   }
 }
 
+const getModeLabel = (mode) => {
+  const labels = {
+    wavelength: '🌈 波长',
+    frequency: '📡 频率',
+    concentration: '📊 浓度',
+    temperature: '🌡️ 温度'
+  }
+  return labels[mode] || mode || '-'
+}
+
+const getOriginalIndex = (record) => {
+  return (props.records || []).findIndex(r => r === record)
+}
+
 const deleteRecord = (index) => {
   const newRecords = props.records.filter((_, i) => i !== index)
   emit('update:records', newRecords)
@@ -3224,6 +3292,105 @@ onUnmounted(() => {})
 
 .btn-save-archive:active {
   transform: translateY(0);
+}
+
+.record-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.record-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.record-tab:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.record-tab.active {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border-color: #2563eb;
+}
+
+.record-tab .tab-count {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.mode-badge-small {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.mode-badge-small.wavelength {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.mode-badge-small.frequency {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.mode-badge-small.concentration {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.mode-badge-small.temperature {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.analysis-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.analysis-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.analysis-tab:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.analysis-tab.active {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  border-color: #7c3aed;
 }
 
 .records-table-container {
