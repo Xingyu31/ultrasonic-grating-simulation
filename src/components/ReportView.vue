@@ -116,33 +116,36 @@
               
               <div class="subsection">
                 <h3>四、实验数据记录</h3>
-                <div v-if="mode.id === 'concentration'" class="liquid-info">
-                  <span class="liquid-label">实验溶液：</span>
-                  <span class="liquid-value">{{ props.params.liquidType || '氯化钠溶液' }}</span>
-                </div>
                 <div v-if="getModeRecords(mode.id).length > 0">
                   <table class="data-table">
                     <thead>
                       <tr>
                         <th>序号</th>
-                        <th>{{ mode.xLabel }}</th>
-                        <th>{{ mode.yLabel }}</th>
-                        <th>声速 (m/s)</th>
+                        <th>波长(nm)</th>
+                        <th>频率(MHz)</th>
+                        <th>浓度(wt%)</th>
+                        <th>间距(mm)</th>
+                        <th>声速(m/s)</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-for="(record, idx) in getModeRecords(mode.id)" :key="idx">
                         <td>{{ idx + 1 }}</td>
-                        <td>{{ formatValue(record, mode.xField) }}</td>
-                        <td>{{ formatValue(record, mode.yField) }}</td>
+                        <td>{{ record.wavelength.toFixed(2) }}</td>
+                        <td>{{ record.frequency.toFixed(1) }}</td>
+                        <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
+                        <td>{{ record.spacing.toFixed(4) }}</td>
                         <td>{{ record.speed.toFixed(1) }}</td>
                       </tr>
-                      <tr class="summary-row" v-if="mode.id !== 'concentration'">
-                        <td colspan="3" class="summary-label">平均值</td>
+                      <tr class="summary-row">
+                        <td colspan="5" class="summary-label">声速平均值</td>
                         <td class="summary-value">{{ getAverageSpeed(mode.id).toFixed(1) }}</td>
                       </tr>
                     </tbody>
                   </table>
+                  <div class="data-summary">
+                    <p>共 {{ getModeRecords(mode.id).length }} 组实验数据</p>
+                  </div>
                 </div>
                 <div v-else class="no-data">
                   <span>📊</span>
@@ -494,33 +497,36 @@ const liquidTypesData = {
 }
 
 const getFlowchartDesc = (modeId) => {
-  const f = props.params.frequency || 8.0
-  const c = props.params.concentration || 7.74
-  const wl = props.params.wavelength || 600.0
+  const records = getModeRecords(modeId)
+  if (records.length === 0) return ''
+  
+  const firstRecord = records[0]
+  const liquidName = props.params.liquidType || '氯化钠溶液'
   
   switch (modeId) {
     case 'wavelength':
-      return `固定参数：频率 f = ${f.toFixed(1)} MHz，浓度 c = ${c.toFixed(2)} wt%`
+      return `实验条件：频率 f = ${firstRecord.frequency.toFixed(1)} MHz，浓度 c = ${firstRecord.concentration ? firstRecord.concentration.toFixed(2) : '-'} wt%（${liquidName}）`
     case 'frequency':
-      return `固定参数：波长 λ = ${wl.toFixed(1)} nm，浓度 c = ${c.toFixed(2)} wt%`
+      return `实验条件：波长 λ = ${firstRecord.wavelength.toFixed(1)} nm，浓度 c = ${firstRecord.concentration ? firstRecord.concentration.toFixed(2) : '-'} wt%（${liquidName}）`
     case 'concentration':
-      return `固定参数：波长 λ = ${wl.toFixed(1)} nm，频率 f = ${f.toFixed(1)} MHz`
+      return `实验条件：波长 λ = ${firstRecord.wavelength.toFixed(1)} nm，频率 f = ${firstRecord.frequency.toFixed(1)} MHz（${liquidName}）`
     default:
       return ''
   }
 }
 
 const getModeFormula = (modeId) => {
-  const f = props.params.frequency || 8.0
-  const c = props.params.concentration || 7.74
-  const wl = props.params.wavelength || 600.0
+  const records = getModeRecords(modeId)
+  if (records.length === 0) return '暂无实验数据'
+  
+  const firstRecord = records[0]
   const distance = props.params.distance || 0.3
   
   if (modeId === 'wavelength') {
-    return `声速公式：v = 2kλfL / D = 2 × 1 × λ × ${(f * 1e6).toFixed(0)} × ${(distance * 1000).toFixed(0)} / D`
+    return `声速公式：v = 2kλfL / D = 2 × 1 × λ × ${(firstRecord.frequency * 1e6).toFixed(0)} × ${(distance * 1000).toFixed(0)} / D`
   }
   if (modeId === 'frequency') {
-    return `声速公式：v = 2kλfL / D = 2 × 1 × ${wl.toFixed(1)} × f × ${(distance * 1000).toFixed(0)} / D`
+    return `声速公式：v = 2kλfL / D = 2 × 1 × ${firstRecord.wavelength.toFixed(1)} × f × ${(distance * 1000).toFixed(0)} / D`
   }
   if (modeId === 'concentration') {
     const liquidTypeId = props.params.liquidTypeId || 'nacl'
@@ -531,21 +537,22 @@ const getModeFormula = (modeId) => {
 }
 
 const getModePrinciple = (modeId) => {
-  const f = props.params.frequency || 8.0
-  const c = props.params.concentration || 7.74
-  const wl = props.params.wavelength || 600.0
+  const records = getModeRecords(modeId)
+  if (records.length === 0) return '暂无实验数据'
+  
+  const firstRecord = records[0]
   const liquidName = props.params.liquidType || '氯化钠溶液'
   
   if (modeId === 'wavelength') {
-    return `根据超声光栅衍射原理，光栅方程为 λₛsinθₖ = kλ，当θₖ很小时，sinθₖ ≈ tanθₖ = Dₖ/(2L)，可得 D = 2kλL/λₛ。由于λₛ = v/f（v为声速，f为超声频率），代入得 D = 2kλLf/v。实验中固定频率 f = ${f.toFixed(1)} MHz，浓度 c = ${c.toFixed(2)} wt%（${liquidName}），改变入射光波长 λ，测量条纹间距 D，验证声速 v 与波长无关。`
+    return `根据超声光栅衍射原理，光栅方程为 λₛsinθₖ = kλ，当θₖ很小时，sinθₖ ≈ tanθₖ = Dₖ/(2L)，可得 D = 2kλL/λₛ。由于λₛ = v/f（v为声速，f为超声频率），代入得 D = 2kλLf/v。实验中固定频率 f = ${firstRecord.frequency.toFixed(1)} MHz，浓度 c = ${firstRecord.concentration ? firstRecord.concentration.toFixed(2) : '-'} wt%（${liquidName}），改变入射光波长 λ，测量条纹间距 D，验证声速 v 与波长无关。`
   }
   if (modeId === 'frequency') {
-    return `根据超声光栅衍射原理，光栅常数λₛ = v/f，代入光栅方程得 D = 2kλLf/v。实验中固定波长 λ = ${wl.toFixed(1)} nm，浓度 c = ${c.toFixed(2)} wt%（${liquidName}），改变超声频率 f，测量条纹间距 D，验证声速 v 与频率无关。`
+    return `根据超声光栅衍射原理，光栅常数λₛ = v/f，代入光栅方程得 D = 2kλLf/v。实验中固定波长 λ = ${firstRecord.wavelength.toFixed(1)} nm，浓度 c = ${firstRecord.concentration ? firstRecord.concentration.toFixed(2) : '-'} wt%（${liquidName}），改变超声频率 f，测量条纹间距 D，验证声速 v 与频率无关。`
   }
   if (modeId === 'concentration') {
     const liquidTypeId = props.params.liquidTypeId || 'nacl'
     const liquidData = liquidTypesData[liquidTypeId] || liquidTypesData['nacl']
-    return `液体中的声速与浓度有关，当浓度增加时，液体密度和弹性模量发生变化，导致声速改变。实验表明，在一定浓度范围内，声速与浓度呈线性关系：v = v₀ + kc，其中v₀为基准声速（${liquidData.baseSpeed} m/s），k为比例系数（约${liquidData.speedFactor} m/s·wt%）。实验中固定波长 λ = ${wl.toFixed(1)} nm，频率 f = ${f.toFixed(1)} MHz，改变浓度 c，测量声速 v。`
+    return `液体中的声速与浓度有关，当浓度增加时，液体密度和弹性模量发生变化，导致声速改变。实验表明，在一定浓度范围内，声速与浓度呈线性关系：v = v₀ + kc，其中v₀为基准声速（${liquidData.baseSpeed} m/s），k为比例系数（约${liquidData.speedFactor} m/s·wt%）。实验中固定波长 λ = ${firstRecord.wavelength.toFixed(1)} nm，频率 f = ${firstRecord.frequency.toFixed(1)} MHz，改变浓度 c，测量声速 v。`
   }
   return ''
 }

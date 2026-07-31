@@ -206,8 +206,8 @@
         <div class="section-header">
           <span class="section-title">实验记录表</span>
           <div class="section-actions">
-            <button class="btn-clear" @click="clearAllRecords">清除数据</button>
-            <button class="btn-export" @click="exportExcel">导出Excel</button>
+            <button class="btn-clear" @click="clearAllRecords">清除全部</button>
+            <button class="btn-export" @click="exportExcel">导出全部</button>
             <button class="btn-save-archive" @click="saveToArchive">📁 创建存档</button>
           </div>
         </div>
@@ -215,20 +215,27 @@
         <!-- 🌈 波长影响记录表 -->
         <div class="sub-table-section">
           <div class="sub-table-header wavelength-header">
-            <span class="sub-table-title">🌈 光波长影响实验数据</span>
-            <span class="sub-table-count">共 {{ getModeRecords('wavelength').length }} 条记录</span>
+            <div class="sub-table-info">
+              <span class="sub-table-title">🌈 光波长影响实验数据</span>
+              <span class="sub-table-count">共 {{ getModeRecords('wavelength').length }} 条记录</span>
+            </div>
+            <div class="sub-table-actions">
+              <button class="btn-table-action" @click="exportModeExcel('wavelength')">💾 导出</button>
+              <button class="btn-table-action btn-danger" @click="clearModeRecords('wavelength')">🗑️ 清空</button>
+              <button class="btn-table-action btn-zoom" @click="zoomModeTable('wavelength')">🔍 放大</button>
+            </div>
           </div>
-          <div class="records-table-container" @dblclick="showTableZoom = true">
+          <div class="records-table-container">
             <table class="records-table">
               <thead>
                 <tr>
-                  <th>序号</th>
+                  <th style="width:50px;">序号</th>
                   <th>波长(nm)</th>
                   <th>频率(MHz)</th>
                   <th>浓度(wt%)</th>
                   <th>间距(mm)</th>
                   <th>声速(m/s)</th>
-                  <th>操作</th>
+                  <th style="width:60px;">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -239,10 +246,10 @@
                   <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
                   <td>{{ record.spacing.toFixed(4) }}</td>
                   <td>{{ record.speed.toFixed(1) }}</td>
-                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删除</button></td>
+                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删</button></td>
                 </tr>
                 <tr v-if="getModeRecords('wavelength').length === 0">
-                  <td colspan="7" class="empty-row">暂无数据，请选择光波长影响实验模式进行测量</td>
+                  <td colspan="7" class="empty-row">暂无数据</td>
                 </tr>
               </tbody>
             </table>
@@ -252,20 +259,27 @@
         <!-- 📡 频率影响记录表 -->
         <div class="sub-table-section">
           <div class="sub-table-header frequency-header">
-            <span class="sub-table-title">📡 超声频率影响实验数据</span>
-            <span class="sub-table-count">共 {{ getModeRecords('frequency').length }} 条记录</span>
+            <div class="sub-table-info">
+              <span class="sub-table-title">📡 超声频率影响实验数据</span>
+              <span class="sub-table-count">共 {{ getModeRecords('frequency').length }} 条记录</span>
+            </div>
+            <div class="sub-table-actions">
+              <button class="btn-table-action" @click="exportModeExcel('frequency')">💾 导出</button>
+              <button class="btn-table-action btn-danger" @click="clearModeRecords('frequency')">🗑️ 清空</button>
+              <button class="btn-table-action btn-zoom" @click="zoomModeTable('frequency')">🔍 放大</button>
+            </div>
           </div>
-          <div class="records-table-container" @dblclick="showTableZoom = true">
+          <div class="records-table-container">
             <table class="records-table">
               <thead>
                 <tr>
-                  <th>序号</th>
+                  <th style="width:50px;">序号</th>
                   <th>频率(MHz)</th>
                   <th>波长(nm)</th>
                   <th>浓度(wt%)</th>
                   <th>间距(mm)</th>
                   <th>声速(m/s)</th>
-                  <th>操作</th>
+                  <th style="width:60px;">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -276,10 +290,10 @@
                   <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
                   <td>{{ record.spacing.toFixed(4) }}</td>
                   <td>{{ record.speed.toFixed(1) }}</td>
-                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删除</button></td>
+                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删</button></td>
                 </tr>
                 <tr v-if="getModeRecords('frequency').length === 0">
-                  <td colspan="7" class="empty-row">暂无数据，请选择超声频率影响实验模式进行测量</td>
+                  <td colspan="7" class="empty-row">暂无数据</td>
                 </tr>
               </tbody>
             </table>
@@ -289,20 +303,27 @@
         <!-- 📊 浓度影响记录表 -->
         <div class="sub-table-section">
           <div class="sub-table-header concentration-header">
-            <span class="sub-table-title">📊 液体浓度影响实验数据</span>
-            <span class="sub-table-count">共 {{ getModeRecords('concentration').length }} 条记录</span>
+            <div class="sub-table-info">
+              <span class="sub-table-title">📊 液体浓度影响实验数据</span>
+              <span class="sub-table-count">共 {{ getModeRecords('concentration').length }} 条记录</span>
+            </div>
+            <div class="sub-table-actions">
+              <button class="btn-table-action" @click="exportModeExcel('concentration')">💾 导出</button>
+              <button class="btn-table-action btn-danger" @click="clearModeRecords('concentration')">🗑️ 清空</button>
+              <button class="btn-table-action btn-zoom" @click="zoomModeTable('concentration')">🔍 放大</button>
+            </div>
           </div>
-          <div class="records-table-container" @dblclick="showTableZoom = true">
+          <div class="records-table-container">
             <table class="records-table">
               <thead>
                 <tr>
-                  <th>序号</th>
+                  <th style="width:50px;">序号</th>
                   <th>浓度(wt%)</th>
                   <th>波长(nm)</th>
                   <th>频率(MHz)</th>
                   <th>间距(mm)</th>
                   <th>声速(m/s)</th>
-                  <th>操作</th>
+                  <th style="width:60px;">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -313,10 +334,10 @@
                   <td>{{ record.frequency.toFixed(1) }}</td>
                   <td>{{ record.spacing.toFixed(4) }}</td>
                   <td>{{ record.speed.toFixed(1) }}</td>
-                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删除</button></td>
+                  <td><button class="btn-delete" @click.stop="deleteRecord(getOriginalIndex(record))">删</button></td>
                 </tr>
                 <tr v-if="getModeRecords('concentration').length === 0">
-                  <td colspan="7" class="empty-row">暂无数据，请选择液体浓度影响实验模式进行测量</td>
+                  <td colspan="7" class="empty-row">暂无数据</td>
                 </tr>
               </tbody>
             </table>
@@ -485,31 +506,85 @@
     <div v-if="showTableZoom" class="zoom-modal" @click="showTableZoom = false">
       <div class="zoom-modal-content" @click.stop>
         <div class="zoom-modal-header">
-          <span class="zoom-modal-title">实验记录表</span>
+          <span class="zoom-modal-title">{{ zoomModeTitle }}</span>
           <button class="zoom-modal-close" @click="showTableZoom = false">✕</button>
         </div>
         <div class="zoom-modal-body">
-          <table class="records-table-large">
+          <!-- 波长影响放大 -->
+          <table v-if="zoomMode === 'wavelength'" class="records-table-large">
             <thead>
               <tr>
                 <th>序号</th>
                 <th>波长(nm)</th>
                 <th>频率(MHz)</th>
-                <th>温度(°C)</th>
                 <th>浓度(wt%)</th>
                 <th>间距(mm)</th>
                 <th>声速(m/s)</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(record, index) in records" :key="index">
+              <tr v-for="(record, index) in getModeRecords('wavelength')" :key="'zw-' + index">
                 <td>{{ index + 1 }}</td>
                 <td>{{ record.wavelength.toFixed(2) }}</td>
                 <td>{{ record.frequency.toFixed(1) }}</td>
-                <td>{{ record.temperature ? record.temperature.toFixed(1) : '-' }}</td>
                 <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
                 <td>{{ record.spacing.toFixed(4) }}</td>
                 <td>{{ record.speed.toFixed(1) }}</td>
+              </tr>
+              <tr v-if="getModeRecords('wavelength').length === 0">
+                <td colspan="6" class="empty-row">暂无数据</td>
+              </tr>
+            </tbody>
+          </table>
+          <!-- 频率影响放大 -->
+          <table v-if="zoomMode === 'frequency'" class="records-table-large">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>频率(MHz)</th>
+                <th>波长(nm)</th>
+                <th>浓度(wt%)</th>
+                <th>间距(mm)</th>
+                <th>声速(m/s)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(record, index) in getModeRecords('frequency')" :key="'zf-' + index">
+                <td>{{ index + 1 }}</td>
+                <td>{{ record.frequency.toFixed(1) }}</td>
+                <td>{{ record.wavelength.toFixed(2) }}</td>
+                <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
+                <td>{{ record.spacing.toFixed(4) }}</td>
+                <td>{{ record.speed.toFixed(1) }}</td>
+              </tr>
+              <tr v-if="getModeRecords('frequency').length === 0">
+                <td colspan="6" class="empty-row">暂无数据</td>
+              </tr>
+            </tbody>
+          </table>
+          <!-- 浓度影响放大 -->
+          <table v-if="zoomMode === 'concentration'" class="records-table-large">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>浓度(wt%)</th>
+                <th>波长(nm)</th>
+                <th>频率(MHz)</th>
+                <th>间距(mm)</th>
+                <th>声速(m/s)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(record, index) in getModeRecords('concentration')" :key="'zc-' + index">
+                <td>{{ index + 1 }}</td>
+                <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
+                <td>{{ record.wavelength.toFixed(2) }}</td>
+                <td>{{ record.frequency.toFixed(1) }}</td>
+                <td>{{ record.spacing.toFixed(4) }}</td>
+                <td>{{ record.speed.toFixed(1) }}</td>
+              </tr>
+              <tr v-if="getModeRecords('concentration').length === 0">
+                <td colspan="6" class="empty-row">暂无数据</td>
               </tr>
             </tbody>
           </table>
@@ -614,6 +689,92 @@ const getModeRecords = (modeId) => {
     return (props.records || []).filter(r => r.experimentMode === 'concentration')
   }
   return []
+}
+
+const zoomMode = ref('wavelength')
+const zoomModeTitle = computed(() => {
+  const titles = {
+    wavelength: '🌈 光波长影响实验数据',
+    frequency: '📡 超声频率影响实验数据',
+    concentration: '📊 液体浓度影响实验数据'
+  }
+  return titles[zoomMode.value] || '实验数据'
+})
+
+const zoomModeTable = (mode) => {
+  zoomMode.value = mode
+  showTableZoom.value = true
+}
+
+const exportModeExcel = (mode) => {
+  const modeRecords = getModeRecords(mode)
+  if (modeRecords.length === 0) {
+    ElMessage.warning('该类别暂无数据可导出')
+    return
+  }
+  
+  const headers = {
+    wavelength: ['序号', '波长(nm)', '频率(MHz)', '浓度(wt%)', '间距(mm)', '声速(m/s)'],
+    frequency: ['序号', '频率(MHz)', '波长(nm)', '浓度(wt%)', '间距(mm)', '声速(m/s)'],
+    concentration: ['序号', '浓度(wt%)', '波长(nm)', '频率(MHz)', '间距(mm)', '声速(m/s)']
+  }
+  
+  const titles = {
+    wavelength: '光波长影响实验数据',
+    frequency: '超声频率影响实验数据',
+    concentration: '液体浓度影响实验数据'
+  }
+  
+  let csvContent = '\uFEFF' + titles[mode] + '\n'
+  csvContent += headers[mode].join(',') + '\n'
+  
+  modeRecords.forEach((record, index) => {
+    let row = [index + 1]
+    if (mode === 'wavelength') {
+      row.push(record.wavelength.toFixed(2))
+      row.push(record.frequency.toFixed(1))
+      row.push(record.concentration ? record.concentration.toFixed(5) : '-')
+      row.push(record.spacing.toFixed(4))
+      row.push(record.speed.toFixed(1))
+    } else if (mode === 'frequency') {
+      row.push(record.frequency.toFixed(1))
+      row.push(record.wavelength.toFixed(2))
+      row.push(record.concentration ? record.concentration.toFixed(5) : '-')
+      row.push(record.spacing.toFixed(4))
+      row.push(record.speed.toFixed(1))
+    } else {
+      row.push(record.concentration ? record.concentration.toFixed(5) : '-')
+      row.push(record.wavelength.toFixed(2))
+      row.push(record.frequency.toFixed(1))
+      row.push(record.spacing.toFixed(4))
+      row.push(record.speed.toFixed(1))
+    }
+    csvContent += row.join(',') + '\n'
+  })
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${titles[mode]}_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+  
+  ElMessage.success(`${titles[mode]}导出成功！`)
+}
+
+const clearModeRecords = (mode) => {
+  const modeNames = {
+    wavelength: '光波长影响',
+    frequency: '超声频率影响',
+    concentration: '液体浓度影响'
+  }
+  
+  if (!confirm(`确定要清除${modeNames[mode]}的所有数据吗？`)) return
+  
+  const newRecords = (props.records || []).filter(r => r.experimentMode !== mode)
+  emit('update:records', newRecords)
+  ElMessage.success(`${modeNames[mode]}数据已清除`)
 }
 
 const filteredRecords = computed(() => {
@@ -3476,15 +3637,51 @@ onUnmounted(() => {})
   border-radius: 8px;
   overflow: hidden;
   background: white;
+  margin-bottom: 10px;
 }
 
 .sub-table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
+  padding: 8px 12px;
   font-weight: bold;
   font-size: 13px;
+}
+
+.sub-table-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sub-table-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-table-action {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-table-action:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.btn-table-action.btn-danger:hover {
+  background: rgba(220, 38, 38, 0.8);
+}
+
+.btn-table-action.btn-zoom:hover {
+  background: rgba(59, 130, 246, 0.8);
 }
 
 .wavelength-header {
@@ -3507,35 +3704,34 @@ onUnmounted(() => {})
 }
 
 .sub-table-count {
-  font-size: 12px;
+  font-size: 11px;
   background: rgba(255, 255, 255, 0.25);
-  padding: 3px 10px;
-  border-radius: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 .records-table-container {
-  padding: 8px;
+  padding: 6px;
   overflow-x: auto;
   overflow-y: auto;
-  max-height: 200px;
+  max-height: 280px;
 }
 
 .records-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
+  table-layout: fixed;
 }
 
 .records-table th {
   background-color: #f1f5f9;
-  padding: 10px 8px;
+  padding: 8px 6px;
   text-align: center;
   font-weight: bold;
   color: #4b5563;
   border-bottom: 2px solid #e5e7eb;
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  font-size: 11px;
 }
 
 .records-table td {
