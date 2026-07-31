@@ -462,6 +462,34 @@ const currentDate = computed(() => {
   })
 })
 
+const liquidTypesData = {
+  'pure-water': {
+    baseSpeed: 1480,
+    speedFactor: 0,
+    temperatureFormula: (t) => 1398 + 3.46 * t
+  },
+  'nacl': {
+    baseSpeed: 1482.3,
+    speedFactor: 4.945
+  },
+  'ethylene-glycol': {
+    baseSpeed: 1500,
+    speedFactor: 10
+  },
+  'glycerol': {
+    baseSpeed: 1480,
+    speedFactor: 12
+  },
+  'sugar': {
+    baseSpeed: 1480,
+    speedFactor: 5.5
+  },
+  'alcohol': {
+    baseSpeed: 1480,
+    speedFactor: -2.5
+  }
+}
+
 const getFlowchartDesc = (modeId) => {
   const f = props.params.frequency || 8.0
   const c = props.params.concentration || 7.74
@@ -542,10 +570,29 @@ const getAverageSpeed = (modeId) => {
 }
 
 const getTheoreticalSpeed = (modeId) => {
-  if (modeId === 'concentration') {
-    return 1500 + (props.params.concentration || 0) * 10
+  const liquidTypeId = props.params.liquidTypeId || 'nacl'
+  const concentration = props.params.concentration || 0
+  const temperature = props.params.temperature || 20
+  
+  const liquidData = liquidTypesData[liquidTypeId] || liquidTypesData['nacl']
+  
+  if (liquidTypeId === 'pure-water') {
+    if (liquidData.temperatureFormula) {
+      return liquidData.temperatureFormula(temperature)
+    }
+    return liquidData.baseSpeed
   }
-  return 1500 + (props.params.concentration || 7.74) * 10
+  
+  if (modeId === 'concentration') {
+    const records = getModeRecords(modeId)
+    if (records.length > 0) {
+      const avgConcentration = records.reduce((acc, r) => acc + r.concentration, 0) / records.length
+      return liquidData.baseSpeed + avgConcentration * liquidData.speedFactor
+    }
+    return liquidData.baseSpeed
+  }
+  
+  return liquidData.baseSpeed + concentration * liquidData.speedFactor
 }
 
 const getRelativeError = (modeId) => {
