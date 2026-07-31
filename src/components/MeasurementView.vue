@@ -803,7 +803,7 @@ const modeRecordCounts = computed(() => {
 
 const filteredAnalysisResult = computed(() => {
   if (!analysisResult.value) return null
-  if (analysisResult.value.mode === analysisTab.value) {
+  if (analysisResult.value.mode === analysisTab.value || analysisResult.value.modeRaw === analysisTab.value) {
     return analysisResult.value
   }
   return null
@@ -856,6 +856,12 @@ watch(fitTab, () => {
   }
   emit('update:mode', fitTab.value)
 })
+
+watch(() => props.records, () => {
+  if (hasData.value) {
+    drawFitChart()
+  }
+}, { deep: true })
 
 watch(() => props.experimentMode, (newMode) => {
   if (newMode !== fitTab.value) {
@@ -1482,7 +1488,7 @@ const drawFitChart = () => {
   let points, xLabel, yLabel, title, stats
   
   if (fitTab.value === 'frequency') {
-    points = props.records.map(r => ({
+    points = getModeRecords('frequency').map(r => ({
       x: r.frequency,
       y: r.spacing
     })).filter(p => p.x > 0 && p.y > 0 && !isNaN(p.x) && !isNaN(p.y))
@@ -1490,7 +1496,7 @@ const drawFitChart = () => {
     yLabel = '条纹间距 D (mm)'
     title = '条纹间距 vs 超声频率'
   } else if (fitTab.value === 'wavelength') {
-    points = props.records.map(r => ({
+    points = getModeRecords('wavelength').map(r => ({
       x: r.wavelength,
       y: r.spacing
     })).filter(p => p.x > 0 && p.y > 0 && !isNaN(p.x) && !isNaN(p.y))
@@ -1498,7 +1504,7 @@ const drawFitChart = () => {
     yLabel = '条纹间距 D (mm)'
     title = '条纹间距 vs 光波长'
   } else {
-    points = props.records.map(r => ({
+    points = getModeRecords('concentration').map(r => ({
       x: r.concentration,
       y: r.speed
     })).filter(p => p.x >= 0 && p.y > 0 && !isNaN(p.x) && !isNaN(p.y) && p.y < 2000)
@@ -1671,9 +1677,9 @@ const performFit = () => {
 const performAnalysis = () => {
   const mode = analysisTab.value
   const records = (props.records || []).filter(r => r.experimentMode === mode)
-  
+
   if (records.length < 3) {
-    showNotification(`请至少测量3组"${getModeLabel(mode)}"数据后再进行分析`, 'warning')
+    showNotification(`请至少测量3组"${getModeLabel(mode)}"数据后再进行分析（当前模式: ${getModeLabel(analysisTab.value)}，已有 ${records.length} 组）`, 'warning')
     return
   }
   
@@ -1731,6 +1737,7 @@ const performAnalysis = () => {
     
     analysisResultData = {
       mode: mode === 'wavelength' ? '🌈 光波长影响' : '📡 超声频率影响',
+      modeRaw: mode,
       analysisType: 'constantSpeed',
       experimentalSpeed,
       theoreticalSpeed,
@@ -1840,6 +1847,7 @@ const performAnalysis = () => {
     
     analysisResultData = {
       mode: '📊 液体浓度影响',
+      modeRaw: mode,
       analysisType: 'linearFit',
       experimentalSpeed: avgSpeed,
       theoreticalSpeed: theoreticalIntercept + slope * props.params.concentration,
@@ -2343,21 +2351,21 @@ const drawFitChartZoom = (ctx, width, height) => {
   let points, xLabel, yLabel, stats
   
   if (fitTab.value === 'frequency') {
-    points = props.records.map(r => ({
+    points = getModeRecords('frequency').map(r => ({
       x: r.frequency,
       y: r.spacing
     })).filter(p => p.x > 0 && p.y > 0 && !isNaN(p.x) && !isNaN(p.y))
     xLabel = '超声频率 f (MHz)'
     yLabel = '条纹间距 D (mm)'
   } else if (fitTab.value === 'wavelength') {
-    points = props.records.map(r => ({
+    points = getModeRecords('wavelength').map(r => ({
       x: r.wavelength,
       y: r.spacing
     })).filter(p => p.x > 0 && p.y > 0 && !isNaN(p.x) && !isNaN(p.y))
     xLabel = '光波长 λ (nm)'
     yLabel = '条纹间距 D (mm)'
   } else {
-    points = props.records.map(r => ({
+    points = getModeRecords('concentration').map(r => ({
       x: r.concentration,
       y: r.speed
     })).filter(p => p.x >= 0 && p.y > 0 && !isNaN(p.x) && !isNaN(p.y) && p.y < 2000)
