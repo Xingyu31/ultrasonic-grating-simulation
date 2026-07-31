@@ -342,9 +342,85 @@
         <button class="tool-btn save-btn" @click="saveReport">
           <span>💾</span> 保存报告
         </button>
+        <button class="tool-btn archive-btn" @click="showArchiveManager = true">
+          <span>📚</span> 报告存档
+        </button>
         <button class="tool-btn close-btn" @click="$emit('close')">
           <span>✕</span> 关闭
         </button>
+      </div>
+      
+      <div v-if="showArchiveManager" class="archive-manager">
+        <div class="archive-manager-header">
+          <span class="archive-manager-title">📚 实验报告存档管理</span>
+          <button class="archive-manager-close" @click="showArchiveManager = false">✕</button>
+        </div>
+        <div class="archive-manager-body">
+          <div class="archive-actions">
+            <button class="btn-create-archive" @click="createReportArchive">📁 创建当前报告存档</button>
+          </div>
+          <div v-if="reportArchives.length > 0" class="archive-list">
+            <div v-for="archive in reportArchives" :key="archive.id" class="archive-item">
+              <div class="archive-item-info">
+                <div class="archive-item-name">{{ archive.name }}</div>
+                <div class="archive-item-meta">
+                  <span>📅 {{ formatTime(archive.createdAt) }}</span>
+                  <span>📊 {{ archive.records.length }}组数据</span>
+                  <span>🎯 {{ archive.mode === 'temperature' ? '温度调节' : getModeName(archive.mode) }}</span>
+                </div>
+              </div>
+              <div class="archive-item-actions">
+                <button class="btn-view" @click="viewArchive(archive)">查看</button>
+                <button class="btn-delete" @click="deleteArchive(archive.id)">删除</button>
+              </div>
+            </div>
+          </div>
+          <div v-else class="archive-empty">
+            <span>📚</span>
+            <p>暂无存档记录</p>
+            <p class="hint">点击上方按钮创建当前实验报告的存档</p>
+          </div>
+        </div>
+      </div>
+      
+      <div v-if="viewingArchive" class="archive-viewer">
+        <div class="archive-viewer-header">
+          <span>📖 查看存档: {{ viewingArchive.name }}</span>
+          <button @click="viewingArchive = null">返回</button>
+        </div>
+        <div class="archive-viewer-body">
+          <div class="data-table-container" v-if="viewingArchive.records.length > 0">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>序号</th>
+                  <th>波长(nm)</th>
+                  <th>频率(MHz)</th>
+                  <th>温度(°C)</th>
+                  <th>浓度(wt%)</th>
+                  <th>间距(mm)</th>
+                  <th>声速(m/s)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(record, idx) in viewingArchive.records" :key="idx">
+                  <td>{{ idx + 1 }}</td>
+                  <td>{{ record.wavelength?.toFixed(1) }}</td>
+                  <td>{{ record.frequency?.toFixed(1) }}</td>
+                  <td>{{ record.temperature?.toFixed(1) }}</td>
+                  <td>{{ record.concentration?.toFixed(5) }}</td>
+                  <td>{{ record.spacing?.toFixed(4) }}</td>
+                  <td>{{ record.speed?.toFixed(1) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="archive-summary">
+            <p>存档时间: {{ formatTime(viewingArchive.createdAt) }}</p>
+            <p>数据组数: {{ viewingArchive.records.length }}</p>
+            <p>实验模式: {{ viewingArchive.mode === 'temperature' ? '温度调节' : getModeName(viewingArchive.mode) }}</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -352,6 +428,8 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getReportArchives, saveReportArchive, deleteReportArchive } from '../utils/reportArchive'
 
 const props = defineProps({
   records: {
@@ -668,6 +746,79 @@ const getTemperatureStatusText = () => {
   if (records.length > 0) return `◐ ${records.length}组数据`
   return '○ 未开始'
 }
+
+const showArchiveManager = ref(false)
+const reportArchives = ref([])
+const viewingArchive = ref(null)
+
+const loadArchives = () => {
+  reportArchives.value = getReportArchives()
+}
+
+const createReportArchive = () => {
+  if (!props.records || props.records.length === 0) {
+    ElMessage.warning('暂无实验数据，无法创建存档')
+    return
+  }
+  
+  ElMessageBox.prompt('请输入存档名称', '创建报告存档', {
+    confirmButtonText: '创建',
+    cancelButtonText: '取消',
+    inputValue: `报告存档 ${new Date().toLocaleString('zh-CN')}`,
+    inputValidator: (value) => {
+      if (!value || !value.trim()) {
+        return '存档名称不能为空'
+      }
+      return true
+    }
+  }).then(({ value }) => {
+    const currentMode = activeTab.value === 'temperature' ? 'temperature' : 'wavelength'
+    const archive = saveReportArchive(value, props.records, props.params, currentMode)
+    if (archive) {
+      ElMessage.success('存档创建成功')
+      loadArchives()
+    } else {
+      ElMessage.error('存档创建失败')
+    }
+  }).catch(() => {})
+}
+
+const viewArchive = (archive) => {
+  viewingArchive.value = archive
+}
+
+const deleteArchive = (id) => {
+  ElMessageBox.confirm('确定要删除这个存档吗？', '删除确认', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    if (deleteReportArchive(id)) {
+      ElMessage.success('存档已删除')
+      loadArchives()
+      if (viewingArchive.value?.id === id) {
+        viewingArchive.value = null
+      }
+    }
+  }).catch(() => {})
+}
+
+const formatTime = (timestamp) => {
+  const date = new Date(timestamp)
+  return date.toLocaleString('zh-CN')
+}
+
+const getModeName = (mode) => {
+  const modes = {
+    wavelength: '光波长影响',
+    frequency: '超声频率影响',
+    concentration: '液体浓度影响',
+    temperature: '温度调节'
+  }
+  return modes[mode] || mode
+}
+
+loadArchives()
 </script>
 
 <style scoped>
@@ -1146,6 +1297,236 @@ const getTemperatureStatusText = () => {
 
 .close-btn:hover {
   background: #e5e7eb;
+}
+
+.archive-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.archive-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+}
+
+.archive-manager {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+}
+
+.archive-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+  border-radius: 12px 12px 0 0;
+}
+
+.archive-manager-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+}
+
+.archive-manager-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.archive-manager-body {
+  background: white;
+  padding: 20px;
+  min-width: 500px;
+  max-width: 700px;
+  max-height: 500px;
+  overflow-y: auto;
+  border-radius: 0 0 12px 12px;
+}
+
+.archive-actions {
+  margin-bottom: 20px;
+}
+
+.btn-create-archive {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-create-archive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.archive-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.archive-item:hover {
+  background: #f3f4f6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.archive-item-info {
+  flex: 1;
+}
+
+.archive-item-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 6px;
+}
+
+.archive-item-meta {
+  display: flex;
+  gap: 15px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.archive-item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-view, .btn-delete {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-view {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-view:hover {
+  background: #2563eb;
+}
+
+.btn-delete {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+}
+
+.archive-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.archive-empty span {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.archive-empty p {
+  margin: 5px 0;
+}
+
+.archive-empty .hint {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.archive-viewer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 3100;
+  display: flex;
+  flex-direction: column;
+}
+
+.archive-viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  color: white;
+}
+
+.archive-viewer-header button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.archive-viewer-header button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.archive-viewer-body {
+  flex: 1;
+  background: white;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+.archive-viewer-body .data-table-container {
+  margin-bottom: 20px;
+}
+
+.archive-summary {
+  padding: 15px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+}
+
+.archive-summary p {
+  margin: 5px 0;
+  color: #0369a1;
+  font-size: 14px;
 }
 
 @media print {

@@ -33,7 +33,7 @@
       </div>
       
       <div class="main-content">
-        <KeepAlive>
+        <KeepAlive include="MeasurementView">
           <MeasurementView v-if="currentView === 'measurement'"
                            :params="params"
                            :records="experimentRecords"
@@ -41,21 +41,21 @@
                            @update:params="updateParams"
                            @update:records="updateRecords"
                            @update:mode="setExperimentMode" />
-          
-          <SimulationView v-else-if="currentView === 'simulation' && !selectedArchive"
-                          :params="params"
-                          :experimentMode="experimentMode"
-                          @update:params="updateParams"
-                          @update:mode="setExperimentMode"
-                          @addRecord="handleAddRecord"
-                          @switch-view="currentView = $event" />
-          <ArchiveSimulationView v-else-if="currentView === 'simulation' && selectedArchive"
-                                 :params="params"
-                                 :experimentMode="experimentMode"
-                                 @update:params="updateParams"
-                                 @update:mode="setExperimentMode"
-                                 @openMeasure="returnToArchiveMeasure" />
         </KeepAlive>
+        
+        <SimulationView v-if="currentView === 'simulation' && !selectedArchive"
+                        :params="params"
+                        :experimentMode="experimentMode"
+                        @update:params="updateParams"
+                        @update:mode="setExperimentMode"
+                        @addRecord="handleAddRecord"
+                        @switch-view="currentView = $event" />
+        <ArchiveSimulationView v-else-if="currentView === 'simulation' && selectedArchive"
+                               :params="params"
+                               :experimentMode="experimentMode"
+                               @update:params="updateParams"
+                               @update:mode="setExperimentMode"
+                               @openMeasure="returnToArchiveMeasure" />
         
         <ArchiveMeasureView v-if="currentView === 'archiveMeasure'"
                             :archive="selectedArchive"
@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import MeasurementView from './components/MeasurementView.vue'
 import SimulationView from './components/SimulationView.vue'
 import Instrument3DScene from './components/Instrument3DScene.vue'
@@ -84,6 +84,7 @@ import WelcomePage from './components/WelcomePage.vue'
 import ReportView from './components/ReportView.vue'
 import ArchiveList from './components/ArchiveList.vue'
 import ArchiveMeasureView from './components/ArchiveMeasureView.vue'
+import { saveRecords, loadRecords, saveParams, loadParams, saveMode, loadMode } from './utils/recordStorage'
 
 const experimentStarted = ref(false)
 const currentView = ref('simulation')
@@ -109,6 +110,33 @@ const params = reactive({
 })
 
 const experimentRecords = ref([])
+
+onMounted(() => {
+  const savedRecords = loadRecords()
+  if (savedRecords && savedRecords.length > 0) {
+    experimentRecords.value = savedRecords
+  }
+  const savedParams = loadParams()
+  if (savedParams) {
+    Object.assign(params, savedParams)
+  }
+  const savedMode = loadMode()
+  if (savedMode) {
+    experimentMode.value = savedMode
+  }
+})
+
+watch(experimentRecords, (newRecords) => {
+  saveRecords(newRecords)
+}, { deep: true })
+
+watch(params, (newParams) => {
+  saveParams(newParams)
+}, { deep: true })
+
+watch(experimentMode, (newMode) => {
+  saveMode(newMode)
+})
 
 const updateParams = (newParams) => {
   Object.assign(params, newParams)
