@@ -545,7 +545,7 @@ const createDrawIntensityCurve = (params, vs) => {
     const dataPoints = []
     for (let i = 0; i <= xResolution; i++) {
       const x = xMin + (i / xResolution) * (xMax - xMin)
-      let intensity = intensityDistribution(x, wavelength, params.frequency, params.concentration, 0.3, params.gratingWidth || 0.01, vs)
+      let intensity = intensityDistribution(x, wavelength, params.frequency, params.concentration, 0.3, params.gratingWidth || 0.0003, vs)
       dataPoints.push({ x, y: intensity })
     }
     

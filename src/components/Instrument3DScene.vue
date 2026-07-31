@@ -709,66 +709,91 @@ const createGenerator = () => {
 };
 const createCCD = () => {
  const ccdGroup = new THREE.Group();
- const blackMaterial = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.5, metalness: 0.8 });
- const aluminumMaterial = new THREE.MeshStandardMaterial({ color: 0xC0C0C0, roughness: 0.3, metalness: 0.9 });
- const lensMaterial = new THREE.MeshStandardMaterial({ color: 0xA5F3FC, roughness: 0.1, metalness: 0.9, emissive: 0x0891B2, emissiveIntensity: 0.3 });
- const bodyGeometry = new THREE.BoxGeometry(1.1, 1.7, 0.8);
+ const blackMaterial = new THREE.MeshStandardMaterial({ color: 0x1F2937, roughness: 0.4, metalness: 0.7 });
+ const aluminumMaterial = new THREE.MeshStandardMaterial({ color: 0xB0B0B0, roughness: 0.3, metalness: 0.9 });
+ const darkGrayMaterial = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.5, metalness: 0.7 });
+ const lensMaterial = new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.05, metalness: 0.9, emissive: 0x1E3A5F, emissiveIntensity: 0.5 });
+ const cyanAccent = new THREE.MeshStandardMaterial({ color: 0x06B6D4, roughness: 0.1, metalness: 0.9, emissive: 0x0891B2, emissiveIntensity: 0.6 });
+ const silverMaterial = new THREE.MeshStandardMaterial({ color: 0xC0C0C0, roughness: 0.2, metalness: 0.95 });
+ const bodyGeometry = new THREE.BoxGeometry(1.5, 1.0, 1.3);
  const body = new THREE.Mesh(bodyGeometry, blackMaterial);
  body.castShadow = true;
+ body.receiveShadow = true;
  ccdGroup.add(body);
- const frontPlateGeometry = new THREE.BoxGeometry(0.05, 1.5, 0.6);
- const frontPlate = new THREE.Mesh(frontPlateGeometry, aluminumMaterial);
- frontPlate.position.set(-0.525, 0, 0);
- frontPlate.castShadow = true;
- ccdGroup.add(frontPlate);
- const lensCapGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 32);
- const lensCap = new THREE.Mesh(lensCapGeometry, blackMaterial);
- lensCap.position.x = -0.565;
- lensCap.rotation.x = Math.PI / 2;
- lensCap.castShadow = true;
- ccdGroup.add(lensCap);
- const screenGeometry = new THREE.BoxGeometry(0.7, 0.55, 0.04);
- const screenMaterial = new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.1, metalness: 0.3, emissive: 0x020617, emissiveIntensity: 0.2 });
+ const topRibGeometry = new THREE.BoxGeometry(1.48, 0.04, 1.28);
+ const topRib = new THREE.Mesh(topRibGeometry, darkGrayMaterial);
+ topRib.position.y = 0.52;
+ topRib.castShadow = true;
+ ccdGroup.add(topRib);
+ const bottomRibGeometry = new THREE.BoxGeometry(1.48, 0.04, 1.28);
+ const bottomRib = new THREE.Mesh(bottomRibGeometry, darkGrayMaterial);
+ bottomRib.position.y = -0.52;
+ bottomRib.castShadow = true;
+ ccdGroup.add(bottomRib);
+ const lensHousingGeometry = new THREE.BoxGeometry(0.35, 0.5, 0.45);
+ const lensHousing = new THREE.Mesh(lensHousingGeometry, darkGrayMaterial);
+ lensHousing.position.set(-0.85, 0.1, 0);
+ lensHousing.castShadow = true;
+ ccdGroup.add(lensHousing);
+ const lensBarrelGeometry = new THREE.CylinderGeometry(0.2, 0.22, 0.3, 32);
+ const lensBarrel = new THREE.Mesh(lensBarrelGeometry, blackMaterial);
+ lensBarrel.rotation.z = Math.PI / 2;
+ lensBarrel.position.set(-1.03, 0.1, 0);
+ lensBarrel.castShadow = true;
+ ccdGroup.add(lensBarrel);
+ const lensGeometry = new THREE.CylinderGeometry(0.16, 0.16, 0.03, 32);
+ const lens = new THREE.Mesh(lensGeometry, lensMaterial);
+ lens.rotation.z = Math.PI / 2;
+ lens.position.set(-1.195, 0.1, 0);
+ ccdGroup.add(lens);
+ const lensRingGeometry = new THREE.TorusGeometry(0.17, 0.015, 8, 32);
+ const lensRing = new THREE.Mesh(lensRingGeometry, cyanAccent);
+ lensRing.position.set(-1.21, 0.1, 0);
+ lensRing.rotation.y = Math.PI / 2;
+ ccdGroup.add(lensRing);
+ const screenGeometry = new THREE.BoxGeometry(0.02, 0.55, 0.7);
+ const screenMaterial = new THREE.MeshStandardMaterial({ color: 0x0A0A0A, roughness: 0.1, metalness: 0.2, emissive: 0x1a2744, emissiveIntensity: 0.3 });
  const screen = new THREE.Mesh(screenGeometry, screenMaterial);
- screen.position.set(0.52, 0.35, 0);
- screen.castShadow = true;
+ screen.position.set(0.75, 0.1, 0);
  ccdGroup.add(screen);
- const screenBezelGeometry = new THREE.BoxGeometry(0.78, 0.63, 0.05);
+ const screenBezelGeometry = new THREE.BoxGeometry(0.03, 0.6, 0.75);
  const screenBezel = new THREE.Mesh(screenBezelGeometry, aluminumMaterial);
- screenBezel.position.set(0.515, 0.35, 0);
+ screenBezel.position.set(0.74, 0.1, 0);
+ screenBezel.castShadow = true;
  ccdGroup.add(screenBezel);
- const statusLightGeometry = new THREE.SphereGeometry(0.05, 16, 16);
- const statusLight = new THREE.Mesh(statusLightGeometry, new THREE.MeshStandardMaterial({ color: 0x22C55E, emissive: 0x166534, emissiveIntensity: 0.8 }));
- statusLight.position.set(0.45, -0.3, 0.41);
+ const buttonArrayGeometry = new THREE.CylinderGeometry(0.025, 0.02, 0.015, 16);
+ for (let i = 0; i < 3; i++) {
+ const btn = new THREE.Mesh(buttonArrayGeometry, silverMaterial);
+ btn.position.set(0.55, 0.52, -0.3 + i * 0.1);
+ btn.rotation.x = Math.PI / 2;
+ ccdGroup.add(btn);
+ }
+ const statusLightGeometry = new THREE.SphereGeometry(0.03, 16, 16);
+ const statusLight = new THREE.Mesh(statusLightGeometry, new THREE.MeshStandardMaterial({ color: 0x22C55E, emissive: 0x166534, emissiveIntensity: 0.9 }));
+ statusLight.position.set(0.65, 0.53, 0.48);
  ccdGroup.add(statusLight);
- const standPostGeometry = new THREE.CylinderGeometry(0.2, 0.2, 2.0, 16);
- const standPost = new THREE.Mesh(standPostGeometry, aluminumMaterial);
- standPost.position.set(0, -1.65, 0);
- standPost.castShadow = true;
- ccdGroup.add(standPost);
- const heightAdjusterGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.7, 16);
- const heightAdjuster = new THREE.Mesh(heightAdjusterGeometry, blackMaterial);
- heightAdjuster.position.set(0, -2.0, 0);
- heightAdjuster.castShadow = true;
- ccdGroup.add(heightAdjuster);
- const baseGeometry = new THREE.BoxGeometry(1.6, 0.3, 1.0);
- const base = new THREE.Mesh(baseGeometry, blackMaterial);
- base.position.y = -2.45;
+ const tripodMountGeometry = new THREE.BoxGeometry(0.5, 0.06, 0.4);
+ const tripodMount = new THREE.Mesh(tripodMountGeometry, darkGrayMaterial);
+ tripodMount.position.y = -0.55;
+ tripodMount.castShadow = true;
+ ccdGroup.add(tripodMount);
+ const tripodGroup = new THREE.Group();
+ const columnGeometry = new THREE.CylinderGeometry(0.06, 0.08, 2.0, 16);
+ const column = new THREE.Mesh(columnGeometry, aluminumMaterial);
+ column.position.y = -1.5;
+ column.castShadow = true;
+ tripodGroup.add(column);
+ const baseGeometry = new THREE.BoxGeometry(0.6, 0.06, 0.5);
+ const base = new THREE.Mesh(baseGeometry, darkGrayMaterial);
+ base.position.y = -2.5;
  base.castShadow = true;
- ccdGroup.add(base);
- const feetGeometry = new THREE.CylinderGeometry(0.12, 0.16, 0.1, 16);
- const foot1 = new THREE.Mesh(feetGeometry, aluminumMaterial);
- foot1.position.set(-0.6, -2.6, 0.35);
- ccdGroup.add(foot1);
- const foot2 = new THREE.Mesh(feetGeometry, aluminumMaterial);
- foot2.position.set(0.6, -2.6, 0.35);
- ccdGroup.add(foot2);
- const foot3 = new THREE.Mesh(feetGeometry, aluminumMaterial);
- foot3.position.set(-0.6, -2.6, -0.35);
- ccdGroup.add(foot3);
- const foot4 = new THREE.Mesh(feetGeometry, aluminumMaterial);
- foot4.position.set(0.6, -2.6, -0.35);
- ccdGroup.add(foot4);
+ tripodGroup.add(base);
+ const footGeom = new THREE.BoxGeometry(0.5, 0.04, 0.4);
+ const foot = new THREE.Mesh(footGeom, aluminumMaterial);
+ foot.position.y = -2.55;
+ foot.castShadow = true;
+ tripodGroup.add(foot);
+ ccdGroup.add(tripodGroup);
  ccdGroup.position.set(9, 2.55, 0);
  ccdGroup.userData = {
  id: 'ccd',
@@ -892,6 +917,78 @@ const createInstruments = () => {
  createComputer();
  usedInstruments.value = ['laser', 'collimator', 'cell', 'generator', 'telescope', 'ccd', 'computer'];
  hideAllInstruments();
+ updateCellGeneratorConnection();
+ if (instruments.connection) {
+ instruments.connection.visible = false;
+ }
+};
+
+const createCellGeneratorConnection = (cellPos, generatorPos) => {
+ const connectionGroup = new THREE.Group();
+ const wireMaterial = new THREE.MeshStandardMaterial({ color: 0x1F2937, roughness: 0.6, metalness: 0.3 });
+ const terminalMaterial = new THREE.MeshStandardMaterial({ color: 0xB45309, roughness: 0.3, metalness: 0.8 });
+ const metalMaterial = new THREE.MeshStandardMaterial({ color: 0xC0C0C0, roughness: 0.2, metalness: 0.95 });
+ const cellTerminalLocalPos = new THREE.Vector3(0, 0, 0.95);
+ const generatorTerminalLocalPos = new THREE.Vector3(0, 0.6, 0.45);
+ const cellTerminalPos = new THREE.Vector3().addVectors(cellPos, cellTerminalLocalPos);
+ const generatorTerminalPos = new THREE.Vector3().addVectors(generatorPos, generatorTerminalLocalPos);
+ const cellTerminalBase = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.06, 16), metalMaterial);
+ cellTerminalBase.position.copy(cellTerminalPos);
+ cellTerminalBase.rotation.x = Math.PI / 2;
+ connectionGroup.add(cellTerminalBase);
+ const cellTerminalInsulator = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.08, 12), terminalMaterial);
+ cellTerminalInsulator.position.set(cellTerminalPos.x + 0.07, cellTerminalPos.y, cellTerminalPos.z);
+ cellTerminalInsulator.rotation.x = Math.PI / 2;
+ connectionGroup.add(cellTerminalInsulator);
+ const genTerminalBase = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.06, 16), metalMaterial);
+ genTerminalBase.position.copy(generatorTerminalPos);
+ genTerminalBase.rotation.y = Math.PI / 2;
+ connectionGroup.add(genTerminalBase);
+ const genTerminalInsulator = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.08, 12), terminalMaterial);
+ genTerminalInsulator.position.set(generatorTerminalPos.x - 0.07, generatorTerminalPos.y, generatorTerminalPos.z);
+ genTerminalInsulator.rotation.y = Math.PI / 2;
+ connectionGroup.add(genTerminalInsulator);
+ const wireStart = new THREE.Vector3(cellTerminalPos.x + 0.11, cellTerminalPos.y, cellTerminalPos.z);
+ const wireEnd = new THREE.Vector3(generatorTerminalPos.x - 0.11, generatorTerminalPos.y, generatorTerminalPos.z);
+ const wireDirection = new THREE.Vector3().subVectors(wireEnd, wireStart);
+ const wireLength = wireDirection.length();
+ const wireMid = new THREE.Vector3().addVectors(wireStart, wireEnd).multiplyScalar(0.5);
+ const wireGeometry = new THREE.CylinderGeometry(0.015, 0.015, wireLength, 12);
+ const wire = new THREE.Mesh(wireGeometry, wireMaterial);
+ wire.position.copy(wireMid);
+ const upAxis = new THREE.Vector3(0, 1, 0);
+ wire.quaternion.setFromUnitVectors(upAxis, wireDirection.clone().normalize());
+ wire.castShadow = true;
+ connectionGroup.add(wire);
+ const connectorHeadGeom = new THREE.CylinderGeometry(0.025, 0.02, 0.06, 12);
+ const connectorHead1 = new THREE.Mesh(connectorHeadGeom, metalMaterial);
+ connectorHead1.position.copy(wireStart);
+ connectorHead1.quaternion.copy(wire.quaternion);
+ connectionGroup.add(connectorHead1);
+ const connectorHead2 = new THREE.Mesh(connectorHeadGeom, metalMaterial);
+ connectorHead2.position.copy(wireEnd);
+ connectorHead2.quaternion.copy(wire.quaternion);
+ connectionGroup.add(connectorHead2);
+ return connectionGroup;
+};
+const updateCellGeneratorConnection = () => {
+ if (!instruments.cell || !instruments.generator) {
+ if (instruments.connection) {
+ instruments.connection.visible = false;
+ }
+ return;
+ }
+ if (!instruments.connection) {
+ instruments.connection = createCellGeneratorConnection(instruments.cell.position, instruments.generator.position);
+ scene.add(instruments.connection);
+ } else {
+ scene.remove(instruments.connection);
+ instruments.connection = createCellGeneratorConnection(instruments.cell.position, instruments.generator.position);
+ scene.add(instruments.connection);
+ }
+ const cellVisible = instruments.cell.visible;
+ const generatorVisible = instruments.generator.visible;
+ instruments.connection.visible = cellVisible && generatorVisible;
 };
 
 const hideAllInstruments = () => {
@@ -905,6 +1002,15 @@ const hideAllInstruments = () => {
 const showInstrument = (instId) => {
  if (instruments[instId]) {
  instruments[instId].visible = true;
+ if (instId === 'cell' && instruments.generator) {
+ instruments.generator.visible = true;
+ }
+ if (instId === 'generator' && instruments.cell) {
+ instruments.cell.visible = true;
+ }
+ if (instruments.connection) {
+ instruments.connection.visible = instruments.cell?.visible && instruments.generator?.visible;
+ }
  ElMessage.success(`已显示${instruments[instId].userData.name}`);
  }
 };
@@ -962,9 +1068,17 @@ const addInstrumentToScene = (instId, position) => {
  break;
  case 'cell':
  createCellAt(position);
+ if (!usedInstruments.value.includes('generator')) {
+ createGeneratorAt({ x: position.x + 3, y: 0.25, z: 0 });
+ usedInstruments.value.push('generator');
+ }
  break;
  case 'generator':
  createGeneratorAt(position);
+ if (!usedInstruments.value.includes('cell')) {
+ createCellAt({ x: position.x - 3, y: 2.3, z: 0 });
+ usedInstruments.value.push('cell');
+ }
  break;
  case 'telescope':
  createTelescopeAt(position);
@@ -976,6 +1090,7 @@ const addInstrumentToScene = (instId, position) => {
  createComputerAt(position);
  break;
  }
+ updateCellGeneratorConnection();
 };
 const createLaserAt = (pos) => {
  const laserGroup = new THREE.Group();
@@ -1216,29 +1331,68 @@ const createTelescopeAt = (pos) => {
 };
 const createCCDAt = (pos) => {
  const ccdGroup = new THREE.Group();
- const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x4a5568, roughness: 0.5, metalness: 0.8 });
- const lensMaterial = new THREE.MeshStandardMaterial({ color: 0x87ceeb, roughness: 0.1, metalness: 0.9 });
- const bodyGeometry = new THREE.BoxGeometry(0.9, 0.6, 0.4);
- const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+ const blackMaterial = new THREE.MeshStandardMaterial({ color: 0x1F2937, roughness: 0.4, metalness: 0.7 });
+ const aluminumMaterial = new THREE.MeshStandardMaterial({ color: 0xB0B0B0, roughness: 0.3, metalness: 0.9 });
+ const darkGrayMaterial = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.5, metalness: 0.7 });
+ const lensMaterial = new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.05, metalness: 0.9, emissive: 0x1E3A5F, emissiveIntensity: 0.5 });
+ const cyanAccent = new THREE.MeshStandardMaterial({ color: 0x06B6D4, roughness: 0.1, metalness: 0.9, emissive: 0x0891B2, emissiveIntensity: 0.6 });
+ const bodyGeometry = new THREE.BoxGeometry(0.75, 0.5, 0.65);
+ const body = new THREE.Mesh(bodyGeometry, blackMaterial);
+ body.castShadow = true;
  ccdGroup.add(body);
- const lensCapGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.06, 32);
- const lensCap = new THREE.Mesh(lensCapGeometry, bodyMaterial);
- lensCap.position.x = -0.48;
- lensCap.rotation.x = Math.PI / 2;
- ccdGroup.add(lensCap);
- const screenGeometry = new THREE.BoxGeometry(0.5, 0.35, 0.03);
- const screenMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.1, metalness: 0.3 });
+ const topRibGeometry = new THREE.BoxGeometry(0.74, 0.02, 0.64);
+ const topRib = new THREE.Mesh(topRibGeometry, darkGrayMaterial);
+ topRib.position.y = 0.26;
+ topRib.castShadow = true;
+ ccdGroup.add(topRib);
+ const lensHousingGeometry = new THREE.BoxGeometry(0.18, 0.25, 0.22);
+ const lensHousing = new THREE.Mesh(lensHousingGeometry, darkGrayMaterial);
+ lensHousing.position.set(-0.43, 0.05, 0);
+ lensHousing.castShadow = true;
+ ccdGroup.add(lensHousing);
+ const lensBarrelGeometry = new THREE.CylinderGeometry(0.1, 0.11, 0.15, 32);
+ const lensBarrel = new THREE.Mesh(lensBarrelGeometry, blackMaterial);
+ lensBarrel.rotation.z = Math.PI / 2;
+ lensBarrel.position.set(-0.52, 0.05, 0);
+ lensBarrel.castShadow = true;
+ ccdGroup.add(lensBarrel);
+ const lensGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.015, 32);
+ const lens = new THREE.Mesh(lensGeometry, lensMaterial);
+ lens.rotation.z = Math.PI / 2;
+ lens.position.set(-0.605, 0.05, 0);
+ ccdGroup.add(lens);
+ const lensRingGeometry = new THREE.TorusGeometry(0.09, 0.008, 8, 32);
+ const lensRing = new THREE.Mesh(lensRingGeometry, cyanAccent);
+ lensRing.position.set(-0.615, 0.05, 0);
+ lensRing.rotation.y = Math.PI / 2;
+ ccdGroup.add(lensRing);
+ const screenGeometry = new THREE.BoxGeometry(0.01, 0.28, 0.35);
+ const screenMaterial = new THREE.MeshStandardMaterial({ color: 0x0A0A0A, roughness: 0.1, metalness: 0.2, emissive: 0x1a2744, emissiveIntensity: 0.3 });
  const screen = new THREE.Mesh(screenGeometry, screenMaterial);
- screen.position.set(0.48, 0, 0);
+ screen.position.set(0.38, 0.05, 0);
  ccdGroup.add(screen);
- const screenBorderGeometry = new THREE.BoxGeometry(0.56, 0.41, 0.04);
- const screenBorder = new THREE.Mesh(screenBorderGeometry, bodyMaterial);
- screenBorder.position.set(0.475, 0, 0);
- ccdGroup.add(screenBorder);
- const baseGeometry = new THREE.BoxGeometry(1.0, 0.2, 0.5);
- const base = new THREE.Mesh(baseGeometry, bodyMaterial);
- base.position.y = -0.5;
- ccdGroup.add(base);
+ const screenBezelGeometry = new THREE.BoxGeometry(0.015, 0.3, 0.38);
+ const screenBezel = new THREE.Mesh(screenBezelGeometry, aluminumMaterial);
+ screenBezel.position.set(0.375, 0.05, 0);
+ screenBezel.castShadow = true;
+ ccdGroup.add(screenBezel);
+ const tripodMountGeometry = new THREE.BoxGeometry(0.25, 0.03, 0.2);
+ const tripodMount = new THREE.Mesh(tripodMountGeometry, darkGrayMaterial);
+ tripodMount.position.y = -0.28;
+ tripodMount.castShadow = true;
+ ccdGroup.add(tripodMount);
+ const tripodGroup = new THREE.Group();
+ const columnGeometry = new THREE.CylinderGeometry(0.03, 0.04, 1.3, 16);
+ const column = new THREE.Mesh(columnGeometry, aluminumMaterial);
+ column.position.y = -0.95;
+ column.castShadow = true;
+ tripodGroup.add(column);
+ const baseGeometry = new THREE.BoxGeometry(0.3, 0.03, 0.25);
+ const base = new THREE.Mesh(baseGeometry, darkGrayMaterial);
+ base.position.y = -1.6;
+ base.castShadow = true;
+ tripodGroup.add(base);
+ ccdGroup.add(tripodGroup);
  ccdGroup.position.set(pos.x, pos.y, pos.z);
  ccdGroup.userData = {
  id: 'ccd',

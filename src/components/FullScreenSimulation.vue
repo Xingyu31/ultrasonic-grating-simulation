@@ -2,7 +2,7 @@
   <div class="fullscreen-simulation" ref="fullscreenRef">
     <div class="sim-header">
       <div class="header-left">
-        <h1>超声光栅衍射虚拟仿真实验</h1>
+        <h1>超声光栅虚拟仿真实验平台</h1>
         <div class="header-subtitle">实物仪器实操仿真模式</div>
       </div>
       <div class="header-right">
@@ -121,7 +121,7 @@
             </div>
             <div class="param-item">
               <span class="param-label">狭缝宽度</span>
-              <span class="param-value">{{ params.gratingWidth.toFixed(4) }} m</span>
+              <span class="param-value">{{ params.gratingWidth.toFixed(5) }} m</span>
             </div>
           </div>
         </div>
@@ -219,7 +219,7 @@ const defaultParams = {
   frequency: 8.0,
   amplitude: 50,
   distance: 0.3,
-  gratingWidth: 0.01
+  gratingWidth: 0.0003
 }
 
 const localParams = reactive({ ...defaultParams, ...props.params })

@@ -54,7 +54,7 @@
               <label class="param-label">温度
                 <button v-if="isPureWater" class="btn-temp-fit" @click="showTempFitModal = true">🌡️ 温度拟合</button>
               </label>
-              <el-slider v-model="localParams.temperature" :min="0" :max="100" :step="0.1"
+              <el-slider v-model="localParams.temperature" :min="0" :max="80" :step="0.1"
                          show-input :input-size="'small'" :disabled="!isPureWater" />
               <span class="param-unit">°C</span>
             </div>
@@ -68,7 +68,7 @@
             </div>
             <div class="param-item">
               <label class="param-label">狭缝宽度</label>
-              <el-slider v-model="localParams.gratingWidth" :min="0.005" :max="0.02" :step="0.0001" 
+              <el-slider v-model="localParams.gratingWidth" :min="0.0001" :max="0.0005" :step="0.00001" 
                          show-input :input-size="'small'" />
               <span class="param-unit">m</span>
             </div>
@@ -218,6 +218,7 @@
                 <th>序号</th>
                 <th>波长(nm)</th>
                 <th>频率(MHz)</th>
+                <th>温度(°C)</th>
                 <th>浓度(wt%)</th>
                 <th>间距(mm)</th>
                 <th>声速(m/s)</th>
@@ -229,13 +230,14 @@
                 <td>{{ index + 1 }}</td>
                 <td>{{ record.wavelength.toFixed(2) }}</td>
                 <td>{{ record.frequency.toFixed(1) }}</td>
+                <td>{{ record.temperature ? record.temperature.toFixed(1) : '-' }}</td>
                 <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
                 <td>{{ record.spacing.toFixed(4) }}</td>
                 <td>{{ record.speed.toFixed(1) }}</td>
                 <td><button class="btn-delete" @click.stop="deleteRecord(index)">删除</button></td>
               </tr>
               <tr v-if="records.length === 0">
-                <td colspan="7" class="empty-row">暂无数据，请先测量</td>
+                <td colspan="8" class="empty-row">暂无数据，请先测量</td>
               </tr>
             </tbody>
           </table>
@@ -402,6 +404,7 @@
                 <th>序号</th>
                 <th>波长(nm)</th>
                 <th>频率(MHz)</th>
+                <th>温度(°C)</th>
                 <th>浓度(wt%)</th>
                 <th>间距(mm)</th>
                 <th>声速(m/s)</th>
@@ -412,6 +415,7 @@
                 <td>{{ index + 1 }}</td>
                 <td>{{ record.wavelength.toFixed(2) }}</td>
                 <td>{{ record.frequency.toFixed(1) }}</td>
+                <td>{{ record.temperature ? record.temperature.toFixed(1) : '-' }}</td>
                 <td>{{ record.concentration ? record.concentration.toFixed(5) : '-' }}</td>
                 <td>{{ record.spacing.toFixed(4) }}</td>
                 <td>{{ record.speed.toFixed(1) }}</td>
@@ -511,7 +515,7 @@ const isPureWater = computed(() => localParams.liquidTypeId === 'pure-water')
 const onLiquidTypeChange = () => {
   if (isPureWater.value) {
     localParams.concentration = 0
-    if (localParams.temperature < 0 || localParams.temperature > 100) {
+    if (localParams.temperature < 0 || localParams.temperature > 80) {
       localParams.temperature = 21
     }
   } else {
@@ -640,7 +644,7 @@ const liquidConfigs = {
     tableData: null,
     temperatureFormula: (t) => 1398 + 3.46 * t,
     minTemperature: 0,
-    maxTemperature: 100
+    maxTemperature: 80
   },
   'nacl': {
     baseSpeed: 1482.3,
@@ -765,7 +769,7 @@ const resetParams = () => {
     frequency: 8.0,
     amplitude: 50,
     distance: 0.3,
-    gratingWidth: 0.01
+    gratingWidth: 0.0003
   })
   emit('update:params', { ...localParams })
 }

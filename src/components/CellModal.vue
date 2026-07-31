@@ -117,7 +117,7 @@ const liquidTypes = [
     useTableData: false,
     useTemperature: true,
     minTemperature: 0,
-    maxTemperature: 100,
+    maxTemperature: 80,
     temperatureFormula: (t) => 1398 + 3.46 * t
   },
   {

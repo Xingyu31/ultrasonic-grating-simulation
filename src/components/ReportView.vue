@@ -4,13 +4,26 @@
       <div class="report-header">
         <div class="report-title">
           <span class="report-icon">📄</span>
-          <span class="report-title-text">超声光栅衍射虚拟仿真实验报告</span>
+          <span class="report-title-text">超声光栅虚拟仿真实验平台 - 实验报告</span>
         </div>
         <button class="report-close" @click="$emit('close')">✕</button>
       </div>
       
+      <div class="report-tabs">
+        <button 
+          v-for="tab in reportTabs" 
+          :key="tab.id"
+          class="report-tab" 
+          :class="{ active: activeTab === tab.id }"
+          @click="activeTab = tab.id"
+        >
+          <span class="tab-icon">{{ tab.icon }}</span>
+          <span>{{ tab.name }}</span>
+        </button>
+      </div>
+      
       <div class="report-body">
-        <div class="report-pdf">
+        <div v-if="activeTab === 'main'" class="report-pdf">
           <div class="pdf-header">
             <h1 class="pdf-title">超声光栅衍射虚拟仿真实验报告</h1>
             <div class="pdf-info">
@@ -31,7 +44,9 @@
             <div class="section-content">
               <div class="subsection">
                 <h3>一、实验目的</h3>
-                <p>{{ mode.objective }}</p>
+                <ol class="objective-list">
+                  <li v-for="(item, i) in mode.objectives" :key="i">{{ item }}</li>
+                </ol>
               </div>
               
               <div class="subsection">
@@ -181,7 +196,140 @@
           
           <div class="pdf-footer">
             <div class="footer-line"></div>
-            <p>超声光栅衍射虚拟仿真实验系统 V3.0</p>
+            <p>超声光栅虚拟仿真实验平台 V4.0</p>
+            <p>Generated at {{ currentDate }}</p>
+          </div>
+        </div>
+        
+        <div v-else-if="activeTab === 'temperature'" class="report-pdf">
+          <div class="pdf-header">
+            <h1 class="pdf-title">纯水下温度调节实验报告</h1>
+            <div class="pdf-info">
+              <span>实验日期：{{ currentDate }}</span>
+              <span>实验溶液：纯水</span>
+            </div>
+          </div>
+          
+          <div class="pdf-section temperature-section">
+            <div class="section-header">
+              <span class="section-number">温度实验</span>
+              <h2 class="section-title">温度对声速的影响</h2>
+              <span class="section-status" :class="getTemperatureStatus()">
+                {{ getTemperatureStatusText() }}
+              </span>
+            </div>
+            
+            <div class="section-content">
+              <div class="subsection">
+                <h3>一、实验目的</h3>
+                <ol class="objective-list">
+                  <li>了解超声光栅的形成原理与Raman–Nath衍射条件</li>
+                  <li>掌握利用超声光栅测量液体中声速的方法</li>
+                  <li>学会用线性拟合与统计检验处理实验数据</li>
+                  <li>研究纯水中温度变化对超声声速的影响，验证声速与温度的定量关系</li>
+                </ol>
+              </div>
+              
+              <div class="subsection">
+                <h3>二、实验原理</h3>
+                <p>液体中的超声声速与温度密切相关。在纯水中，声速随温度升高而增大，遵循以下经验公式：</p>
+                <div class="formula-box">
+                  v(T) = 1500 + 0.4 × (T - 25) m/s
+                </div>
+                <p>其中 v(T) 为温度T时的声速，T为摄氏温度。在25°C时，纯水中声速约为1500 m/s，温度每升高1°C，声速约增加0.4 m/s。</p>
+              </div>
+              
+              <div class="subsection">
+                <h3>三、实验数据记录</h3>
+                <div v-if="getTemperatureRecords().length > 0">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>序号</th>
+                        <th>温度 (°C)</th>
+                        <th>频率 (MHz)</th>
+                        <th>波长 (nm)</th>
+                        <th>条纹间距 (mm)</th>
+                        <th>实测声速 (m/s)</th>
+                        <th>理论声速 (m/s)</th>
+                        <th>相对误差 (%)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(record, idx) in getTemperatureRecords()" :key="idx">
+                        <td>{{ idx + 1 }}</td>
+                        <td>{{ record.temperature ? record.temperature.toFixed(1) : '-' }}</td>
+                        <td>{{ record.frequency.toFixed(1) }}</td>
+                        <td>{{ record.wavelength.toFixed(1) }}</td>
+                        <td>{{ record.spacing.toFixed(4) }}</td>
+                        <td>{{ record.speed.toFixed(1) }}</td>
+                        <td>{{ getTheoreticalTempSpeed(record.temperature).toFixed(1) }}</td>
+                        <td>{{ getTempError(record).toFixed(2) }}</td>
+                      </tr>
+                      <tr class="summary-row">
+                        <td colspan="5" class="summary-label">平均值</td>
+                        <td class="summary-value">{{ getTemperatureAvgSpeed().toFixed(1) }}</td>
+                        <td class="summary-value">{{ getTemperatureAvgTheoSpeed().toFixed(1) }}</td>
+                        <td class="summary-value">{{ getTemperatureOverallError().toFixed(2) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div v-else class="no-data">
+                  <span>🌡️</span>
+                  <p>暂无温度实验数据，请先在测量页面进行温度调节实验</p>
+                </div>
+              </div>
+              
+              <div class="subsection" v-if="getTemperatureRecords().length >= 3">
+                <h3>四、数据处理与分析</h3>
+                <div class="analysis-box">
+                  <div class="analysis-item">
+                    <span class="analysis-label">温度范围</span>
+                    <span class="analysis-value">{{ getTempRange() }} °C</span>
+                  </div>
+                  <div class="analysis-item">
+                    <span class="analysis-label">实测声速范围</span>
+                    <span class="analysis-value">{{ getSpeedRange() }} m/s</span>
+                  </div>
+                  <div class="analysis-item">
+                    <span class="analysis-label">平均声速温度系数</span>
+                    <span class="analysis-value">{{ getTempCoefficient().toFixed(3) }} m/s·°C</span>
+                  </div>
+                  <div class="analysis-item">
+                    <span class="analysis-label">理论温度系数</span>
+                    <span class="analysis-value">0.400 m/s·°C</span>
+                  </div>
+                  <div class="analysis-item">
+                    <span class="analysis-label">相对误差</span>
+                    <span class="analysis-value" :class="{ error: Math.abs(getTemperatureOverallError()) > 5 }">
+                      {{ getTemperatureOverallError().toFixed(2) }}%
+                    </span>
+                  </div>
+                  <div class="analysis-item">
+                    <span class="analysis-label">数据一致性</span>
+                    <span class="analysis-value" :class="getTemperatureConsistency().toLowerCase()">
+                      {{ getTemperatureConsistency() }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="subsection">
+                <h3>五、实验结论</h3>
+                <div v-if="getTemperatureRecords().length >= 3" class="conclusion-box">
+                  <p>{{ getTemperatureConclusion() }}</p>
+                </div>
+                <div v-else class="no-conclusion">
+                  <p>完成至少3组温度测量后自动生成结论</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="pdf-footer">
+            <div class="footer-line"></div>
+            <p>超声光栅虚拟仿真实验平台 V4.0</p>
             <p>Generated at {{ currentDate }}</p>
           </div>
         </div>
@@ -203,7 +351,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
   records: {
@@ -217,6 +365,13 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+
+const activeTab = ref('main')
+
+const reportTabs = [
+  { id: 'main', name: '主实验报告', icon: '📊' },
+  { id: 'temperature', name: '温度调节报告', icon: '🌡️' }
+]
 
 const currentDate = computed(() => {
   const now = new Date()
@@ -250,7 +405,12 @@ const reportModes = [
   {
     id: 'wavelength',
     title: '光波长对衍射条纹的影响',
-    objective: '研究固定超声频率和液体浓度时，入射光波长与衍射条纹间距的关系，验证声速与波长无关。',
+    objectives: [
+      '了解超声光栅的形成原理与Raman–Nath衍射条件',
+      '掌握利用超声光栅测量液体中声速的方法',
+      '学会用线性拟合与统计检验处理实验数据',
+      '研究固定超声频率和液体浓度时，入射光波长与衍射条纹间距的关系，验证声速与波长无关'
+    ],
     principle: '根据超声光栅衍射原理，光栅方程为 λₛsinθₖ = kλ，当θₖ很小时，sinθₖ ≈ tanθₖ = Dₖ/(2L)，可得 D = 2kλL/λₛ。由于λₛ = v/f（v为声速，f为超声频率），代入得 D = 2kλLf/v。当f和v固定时，D与λ呈严格正比例关系，λ/D = v/(2kLf) 为常数。',
     formula: '声速公式：v = 2kλfL / D',
     xLabel: '波长 (nm)',
@@ -261,7 +421,12 @@ const reportModes = [
   {
     id: 'frequency',
     title: '超声频率对衍射条纹的影响',
-    objective: '研究固定入射光波长和液体浓度时，超声频率与衍射条纹间距的关系，验证声速与频率无关。',
+    objectives: [
+      '了解超声光栅的形成原理与Raman–Nath衍射条件',
+      '掌握利用超声光栅测量液体中声速的方法',
+      '学会用线性拟合与统计检验处理实验数据',
+      '研究固定入射光波长和液体浓度时，超声频率与衍射条纹间距的关系，验证声速与频率无关'
+    ],
     principle: '根据超声光栅衍射原理，光栅常数λₛ = v/f，代入光栅方程得 D = 2kλLf/v。当λ和v固定时，D与f呈严格正比例关系，f/D = v/(2kλL) 为常数。通过改变超声频率，测量对应的衍射条纹间距，验证声速保持恒定。',
     formula: '声速公式：v = 2kλfL / D',
     xLabel: '频率 (MHz)',
@@ -272,7 +437,12 @@ const reportModes = [
   {
     id: 'concentration',
     title: '液体浓度对声速的影响',
-    objective: '研究固定入射光波长和超声频率时，液体浓度与声速的关系，验证声速随浓度线性变化。',
+    objectives: [
+      '了解超声光栅的形成原理与Raman–Nath衍射条件',
+      '掌握利用超声光栅测量液体中声速的方法',
+      '学会用线性拟合与统计检验处理实验数据',
+      '研究固定入射光波长和超声频率时，液体浓度与声速的关系，验证声速随浓度线性变化'
+    ],
     principle: '液体中的声速与浓度有关，当浓度增加时，液体密度和弹性模量发生变化，导致声速改变。实验表明，在一定浓度范围内，声速与浓度呈线性关系：v = v₀ + kc，其中v₀为纯水的声速（约1500 m/s），k为比例系数（约10 m/s·wt%）。',
     formula: '声速公式：v = 1500 + 10 × c',
     xLabel: '浓度 (wt%)',
@@ -390,9 +560,113 @@ const saveReport = () => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `超声光栅衍射实验报告_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.html`
+  a.download = `超声光栅实验报告_${activeTab.value === 'temperature' ? '温度调节' : '主实验'}_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.html`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+const getTemperatureRecords = () => {
+  return props.records.filter(r => r.experimentMode === 'temperature' || r.temperature !== undefined && r.temperature !== null && r.concentration === 0)
+}
+
+const getTheoreticalTempSpeed = (temperature) => {
+  if (!temperature) return 1500
+  return 1500 + 0.4 * (temperature - 25)
+}
+
+const getTempError = (record) => {
+  const theoSpeed = getTheoreticalTempSpeed(record.temperature)
+  if (theoSpeed === 0) return 0
+  return ((record.speed - theoSpeed) / theoSpeed) * 100
+}
+
+const getTemperatureAvgSpeed = () => {
+  const records = getTemperatureRecords()
+  if (records.length === 0) return 0
+  return records.reduce((acc, r) => acc + r.speed, 0) / records.length
+}
+
+const getTemperatureAvgTheoSpeed = () => {
+  const records = getTemperatureRecords()
+  if (records.length === 0) return 0
+  return records.reduce((acc, r) => acc + getTheoreticalTempSpeed(r.temperature), 0) / records.length
+}
+
+const getTemperatureOverallError = () => {
+  const records = getTemperatureRecords()
+  if (records.length === 0) return 0
+  const avgSpeed = getTemperatureAvgSpeed()
+  const avgTheoSpeed = getTemperatureAvgTheoSpeed()
+  if (avgTheoSpeed === 0) return 0
+  return ((avgSpeed - avgTheoSpeed) / avgTheoSpeed) * 100
+}
+
+const getTempRange = () => {
+  const records = getTemperatureRecords()
+  if (records.length === 0) return '-'
+  const temps = records.map(r => r.temperature).filter(t => t !== undefined && t !== null)
+  if (temps.length === 0) return '-'
+  return `${Math.min(...temps).toFixed(1)} ~ ${Math.max(...temps).toFixed(1)}`
+}
+
+const getSpeedRange = () => {
+  const records = getTemperatureRecords()
+  if (records.length === 0) return '-'
+  const speeds = records.map(r => r.speed)
+  return `${Math.min(...speeds).toFixed(1)} ~ ${Math.max(...speeds).toFixed(1)}`
+}
+
+const getTempCoefficient = () => {
+  const records = getTemperatureRecords()
+  if (records.length < 2) return 0
+  const temps = records.map(r => r.temperature)
+  const speeds = records.map(r => r.speed)
+  const n = records.length
+  const sumX = temps.reduce((acc, v) => acc + v, 0)
+  const sumY = speeds.reduce((acc, v) => acc + v, 0)
+  const sumXY = temps.reduce((acc, v, i) => acc + v * speeds[i], 0)
+  const sumX2 = temps.reduce((acc, v) => acc + v * v, 0)
+  const denom = n * sumX2 - sumX * sumX
+  return denom > 0 ? (n * sumXY - sumX * sumY) / denom : 0
+}
+
+const getTemperatureConsistency = () => {
+  const records = getTemperatureRecords()
+  if (records.length < 2) return '待测量'
+  const avg = getTemperatureAvgSpeed()
+  const variance = records.reduce((acc, r) => acc + Math.pow(r.speed - avg, 2), 0) / records.length
+  const stdDev = Math.sqrt(variance)
+  const cv = avg > 0 ? (stdDev / avg) * 100 : 0
+  if (cv < 0.3) return '优秀'
+  if (cv < 0.5) return '良好'
+  if (cv < 1.0) return '一般'
+  return '较差'
+}
+
+const getTemperatureConclusion = () => {
+  const records = getTemperatureRecords()
+  const avgSpeed = getTemperatureAvgSpeed()
+  const avgTheoSpeed = getTemperatureAvgTheoSpeed()
+  const error = getTemperatureOverallError()
+  const coefficient = getTempCoefficient()
+  const consistency = getTemperatureConsistency()
+  const temps = records.map(r => r.temperature).filter(t => t !== undefined && t !== null)
+  
+  return `在纯水中进行温度调节实验，温度范围为 ${Math.min(...temps).toFixed(1)}~${Math.max(...temps).toFixed(1)}°C。测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${avgTheoSpeed.toFixed(1)} m/s，相对误差为 ${Math.abs(error).toFixed(2)}%。通过线性拟合得到声速温度系数为 ${coefficient.toFixed(3)} m/s·°C，与理论值 0.400 m/s·°C 的偏差为 ${Math.abs(((coefficient - 0.4) / 0.4) * 100).toFixed(2)}%。数据一致性为${consistency}，实验结果表明纯水中声速随温度线性增加，符合理论预期。`
+}
+
+const getTemperatureStatus = () => {
+  const records = getTemperatureRecords()
+  if (records.length >= 3) return 'completed'
+  if (records.length > 0) return 'partial'
+  return 'empty'
+}
+
+const getTemperatureStatusText = () => {
+  const records = getTemperatureRecords()
+  if (records.length >= 3) return '✓ 已完成'
+  if (records.length > 0) return `◐ ${records.length}组数据`
+  return '○ 未开始'
 }
 </script>
 
@@ -420,6 +694,7 @@ const saveReport = () => {
   display: flex;
   flex-direction: column;
   max-height: 90vh;
+  overflow: hidden;
 }
 
 .report-header {
@@ -428,7 +703,44 @@ const saveReport = () => {
   align-items: center;
   padding: 16px 24px;
   background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  border-radius: 12px 12px 0 0;
+}
+
+.report-tabs {
+  display: flex;
+  background: #f1f5f9;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.report-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.report-tab:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.report-tab.active {
+  background: #fff;
+  color: #1e40af;
+  border-bottom-color: #3b82f6;
+}
+
+.tab-icon {
+  font-size: 18px;
 }
 
 .report-title {
@@ -598,6 +910,18 @@ const saveReport = () => {
   color: #4b5563;
   margin: 0;
   text-align: justify;
+}
+
+.objective-list {
+  padding-left: 24px;
+  margin: 10px 0;
+}
+
+.objective-list li {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #4b5563;
+  margin-bottom: 6px;
 }
 
 .formula-box {

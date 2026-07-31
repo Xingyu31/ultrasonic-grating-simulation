@@ -19,7 +19,7 @@
             </div>
             <div class="info-row">
               <span class="info-label">温度范围：</span>
-              <span class="info-value">0 ~ 100 °C</span>
+              <span class="info-value">0 ~ 80 °C</span>
             </div>
             <div class="info-row">
               <span class="info-label">数据点数：</span>
@@ -228,7 +228,7 @@ const drawChart = () => {
   }))
 
   const xMin = 0
-  const xMax = 100
+  const xMax = 80
   const allY = points.map(p => p.y)
   const yMin = Math.min(...allY) - 20
   const yMax = Math.max(...allY) + 20

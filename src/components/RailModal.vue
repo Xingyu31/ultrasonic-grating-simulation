@@ -20,8 +20,8 @@
         <div class="control-section">
           <div class="section-label">狭缝宽度设置</div>
           <div class="slider-container">
-            <span class="slider-label">宽度: {{ gratingWidth.toFixed(4) }} m</span>
-            <el-slider v-model="localGratingWidth" :min="0.005" :max="0.02" :step="0.0001" 
+            <span class="slider-label">宽度: {{ gratingWidth.toFixed(5) }} m</span>
+            <el-slider v-model="localGratingWidth" :min="0.0001" :max="0.0005" :step="0.00001" 
                        show-input :input-size="'small'" />
           </div>
         </div>

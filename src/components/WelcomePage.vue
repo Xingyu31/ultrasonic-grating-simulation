@@ -6,7 +6,7 @@
         <div class="logo-container">
           <span class="logo-icon">🔬</span>
         </div>
-        <h1 class="welcome-title">超声光栅衍射虚拟仿真实验</h1>
+        <h1 class="welcome-title">超声光栅虚拟仿真实验平台</h1>
         <p class="welcome-subtitle">Ultrasonic Grating Diffraction Virtual Simulation Experiment</p>
       </div>
       
@@ -103,7 +103,7 @@
       
       <div class="welcome-footer">
         <span class="version">Version 3.0</span>
-        <span class="copyright">© 2024 超声光栅衍射虚拟仿真实验</span>
+        <span class="copyright">© 2024 超声光栅虚拟仿真实验平台</span>
       </div>
     </div>
   </div>

@@ -7,7 +7,7 @@
         <div class="title-left">
           <span class="app-icon">🔬</span>
           <div class="title-text">
-            <span class="app-title">超声光栅衍射虚拟仿真实验</span>
+            <span class="app-title">超声光栅虚拟仿真实验平台</span>
             <span v-if="currentView === 'simulation'" class="mode-label">实物仪器实操仿真模式</span>
             <span v-if="currentView === 'archiveMeasure'" class="mode-label">🔍 未知浓度测量模式</span>
           </div>
@@ -102,7 +102,7 @@ const params = reactive({
   frequency: 8.0,
   amplitude: 50,
   distance: 0.3,
-  gratingWidth: 0.01,
+  gratingWidth: 0.0003,
   temperature: 20,
   liquidType: '氯化钠溶液',
   liquidTypeId: 'nacl'
