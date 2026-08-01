@@ -226,7 +226,10 @@
         </div>
 
         <!-- 🌈 波长影响记录表 -->
-        <div class="sub-table-section">
+        <div class="sub-table-section" :class="{ 'table-disabled': isPureWater }">
+          <div v-if="isPureWater" class="table-disabled-mask">
+            <span>🌡️ 温度拟合模式，数据表已禁用</span>
+          </div>
           <div class="sub-table-header wavelength-header">
             <div class="sub-table-info">
               <span class="sub-table-title">🌈 光波长影响实验数据</span>
@@ -268,7 +271,10 @@
         </div>
 
         <!-- 📡 频率影响记录表 -->
-        <div class="sub-table-section">
+        <div class="sub-table-section" :class="{ 'table-disabled': isPureWater }">
+          <div v-if="isPureWater" class="table-disabled-mask">
+            <span>🌡️ 温度拟合模式，数据表已禁用</span>
+          </div>
           <div class="sub-table-header frequency-header">
             <div class="sub-table-info">
               <span class="sub-table-title">📡 超声频率影响实验数据</span>
@@ -310,7 +316,10 @@
         </div>
 
         <!-- 📊 浓度影响记录表 -->
-        <div class="sub-table-section">
+        <div class="sub-table-section" :class="{ 'table-disabled': isPureWater }">
+          <div v-if="isPureWater" class="table-disabled-mask">
+            <span>🌡️ 温度拟合模式，数据表已禁用</span>
+          </div>
           <div class="sub-table-header concentration-header">
             <div class="sub-table-info">
               <span class="sub-table-title">📊 液体浓度影响实验数据</span>
@@ -2724,7 +2733,13 @@ const adjustCursor = (index, delta) => {
 
 const saveRecord = () => {
   if (spacing.value === 0) return
-  
+
+  // 温度拟合模式（纯水）下，三个数据表禁用，不保存记录
+  if (isPureWater.value) {
+    ElMessage.warning('🌡️ 温度拟合模式下，数据表已禁用。温度实验数据请在「温度拟合」弹窗中查看，不保存到下方数据表。')
+    return
+  }
+
   const error = (Math.random() - 0.5) * 0.01
   const measuredSpacing = spacing.value + error
   
@@ -3689,6 +3704,39 @@ onUnmounted(() => {})
   overflow: hidden;
   background: white;
   margin-bottom: 10px;
+  position: relative;
+}
+
+/* 温度拟合模式禁用状态 */
+.sub-table-section.table-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+  filter: grayscale(0.4);
+}
+
+.table-disabled-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(241, 245, 249, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.table-disabled-mask span {
+  background: rgba(15, 23, 42, 0.78);
+  color: #fbbf24;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .sub-table-header {
