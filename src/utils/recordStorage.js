@@ -42,6 +42,16 @@ export const saveParams = (params) => {
   }
 }
 
+export const clearParams = () => {
+  try {
+    localStorage.removeItem(PARAMS_KEY)
+    return true
+  } catch (e) {
+    console.error('Failed to clear params:', e)
+    return false
+  }
+}
+
 export const loadParams = () => {
   try {
     const data = localStorage.getItem(PARAMS_KEY)

@@ -85,7 +85,7 @@ import WelcomePage from './components/WelcomePage.vue'
 import ReportView from './components/ReportView.vue'
 import ArchiveList from './components/ArchiveList.vue'
 import ArchiveMeasureView from './components/ArchiveMeasureView.vue'
-import { saveRecords, loadRecords, saveParams, loadParams, saveMode, loadMode } from './utils/recordStorage'
+import { saveRecords, clearRecords, saveParams, clearParams, saveMode, loadMode } from './utils/recordStorage'
 
 const experimentStarted = ref(false)
 const currentView = ref('simulation')
@@ -115,14 +115,11 @@ const params = reactive({
 const experimentRecords = ref([])
 
 onMounted(() => {
-  const savedRecords = loadRecords()
-  if (savedRecords && savedRecords.length > 0) {
-    experimentRecords.value = savedRecords
-  }
-  const savedParams = loadParams()
-  if (savedParams) {
-    Object.assign(params, savedParams)
-  }
+  // 每次进入网址时清除上次的实验记录和参数，使用固定的默认参数
+  clearRecords()
+  clearParams()
+  experimentRecords.value = []
+  // params 保持固定的默认值，不加载上次保存的参数
   const savedMode = loadMode()
   if (savedMode) {
     experimentMode.value = savedMode
