@@ -2735,24 +2735,21 @@ const adjustCursor = (index, delta) => {
 const saveRecord = () => {
   if (spacing.value === 0) return
 
-  // 温度拟合模式（纯水）下，三个数据表禁用，不保存记录
-  if (isPureWater.value) {
-    ElMessage.warning('🌡️ 温度拟合模式下，数据表已禁用。温度实验数据请在「温度拟合」弹窗中查看，不保存到下方数据表。')
-    return
-  }
-
   const error = (Math.random() - 0.5) * 0.01
   const measuredSpacing = spacing.value + error
-  
+
   const baseVs = getSoundSpeed(localParams.liquidTypeId || 'nacl', localParams.concentration, localParams.temperature)
-  
+
   const speedError = (Math.random() - 0.5) * 3
   let finalSpeed = baseVs + speedError
-  
+
   if (finalSpeed <= 0 || isNaN(finalSpeed)) {
     finalSpeed = baseVs
   }
-  
+
+  // 温度拟合模式（纯水）下，保存为温度实验数据，不进入三个普通数据表
+  const experimentMode = isPureWater.value ? 'temperature' : fitTab.value
+
   const newRecord = {
     wavelength: localParams.wavelength,
     frequency: localParams.frequency,
@@ -2761,13 +2758,17 @@ const saveRecord = () => {
     liquidTypeId: localParams.liquidTypeId,
     spacing: measuredSpacing,
     speed: finalSpeed,
-    experimentMode: fitTab.value
+    experimentMode: experimentMode
   }
-  
+
   const newRecords = [...(props.records || []), newRecord]
   emit('update:records', newRecords)
   plus1Position.value = ''
   minus1Position.value = ''
+
+  if (isPureWater.value) {
+    ElMessage.success('🌡️ 温度实验数据已保存，可在「温度拟合」弹窗中查看')
+  }
 }
 
 const saveToArchive = () => {

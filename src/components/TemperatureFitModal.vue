@@ -122,7 +122,7 @@ const fitResult = ref(null)
 const tempRecords = computed(() => {
   if (!props.records || props.records.length === 0) return []
   return props.records
-    .filter(r => r.liquidTypeId === 'pure-water' || (r.temperature !== undefined && r.temperature !== null))
+    .filter(r => r.experimentMode === 'temperature' || r.liquidTypeId === 'pure-water')
     .filter(r => r.temperature !== undefined && r.temperature !== null && !isNaN(r.temperature) && r.speed > 0)
     .slice()
     .sort((a, b) => a.temperature - b.temperature)
