@@ -487,13 +487,16 @@ const createDrawDiffractionPattern = (params, vs) => {
 
 const intensityDistribution = (x, wavelength, frequency, concentration, distance, gratingWidth, vs) => {
   const ds = vs / (frequency * 1e6)
-  const k = 2 * Math.PI / wavelength
-  const u = k * gratingWidth * x / (2 * distance)
-  const beta = k * ds / 2
   
+  const fringeSpacing = wavelength * distance / ds
+  
+  const envelopeScale = fringeSpacing * 5
+  const u = Math.PI * x / envelopeScale
   const sincU = Math.abs(u) < 1e-10 ? 1 : Math.sin(u) / u
   const envelope = Math.pow(sincU, 2)
-  const interference = Math.pow(Math.cos(beta * x / distance), 2)
+  
+  const beta = Math.PI / fringeSpacing
+  const interference = Math.pow(Math.cos(beta * x), 2)
   
   return envelope * interference
 }
