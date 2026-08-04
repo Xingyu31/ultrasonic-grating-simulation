@@ -1043,7 +1043,7 @@ const intensityDistribution = (x, wavelength, frequency, concentration, distance
   
   const fringeSpacing = wavelength * distance / ds
   
-  const envelopeScale = fringeSpacing * 5
+  const envelopeScale = fringeSpacing * 3
   const u = Math.PI * x / envelopeScale
   const sincU = Math.abs(u) < 1e-10 ? 1 : Math.sin(u) / u
   const envelope = Math.pow(sincU, 2)
