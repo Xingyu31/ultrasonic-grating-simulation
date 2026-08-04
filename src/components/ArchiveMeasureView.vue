@@ -488,7 +488,8 @@ const createDrawDiffractionPattern = (params, vs) => {
 const intensityDistribution = (x, wavelength, frequency, concentration, distance, gratingWidth, vs) => {
   const ds = vs / (frequency * 1e6)
   const k = 2 * Math.PI / wavelength
-  const u = k * gratingWidth * x / (2 * distance)
+  const characteristicScale = gratingWidth / 5
+  const u = k * characteristicScale * x / (2 * distance)
   const beta = k * ds / 2
   
   const envelope = Math.pow(Math.sin(u) / (u || 1), 2)
