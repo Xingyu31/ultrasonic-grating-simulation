@@ -491,7 +491,8 @@ const intensityDistribution = (x, wavelength, frequency, concentration, distance
   const u = k * gratingWidth * x / (2 * distance)
   const beta = k * ds / 2
   
-  const envelope = Math.pow(Math.sin(u) / (u || 1), 2)
+  const sincU = Math.abs(u) < 1e-10 ? 1 : Math.sin(u) / u
+  const envelope = Math.pow(sincU, 2)
   const interference = Math.pow(Math.cos(beta * x / distance), 2)
   
   return envelope * interference

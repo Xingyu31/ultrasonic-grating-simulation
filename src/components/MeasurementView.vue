@@ -1044,7 +1044,8 @@ const intensityDistribution = (x, wavelength, frequency, concentration, distance
   const u = k * gratingWidth * x / (2 * distance)
   const beta = k * ds / 2
   
-  const envelope = Math.pow(Math.sin(u) / (u || 1), 2)
+  const sincU = Math.abs(u) < 1e-10 ? 1 : Math.sin(u) / u
+  const envelope = Math.pow(sincU, 2)
   const interference = Math.pow(Math.cos(beta * x / distance), 2)
   
   return envelope * interference
@@ -1115,12 +1116,8 @@ const drawDiffractionPattern = () => {
   for (let m = -5; m <= 5; m++) {
     const xM = fringePosition(m, wavelength, props.params.frequency, props.params.concentration, props.params.distance)
     
-    let mIntensity
-    if (m === 0) {
-      mIntensity = 1.0
-    } else {
-      mIntensity = Math.max(0.05, Math.pow(0.6, Math.abs(m)))
-    }
+    const mIntensity = intensityDistribution(xM, wavelength, props.params.frequency, props.params.concentration, props.params.distance, props.params.gratingWidth)
+    const displayIntensity = Math.max(0.02, mIntensity)
     
     const px = xCenter + (xM / (xMax - xMin)) * width
     
@@ -1985,12 +1982,8 @@ const drawDiffractionPatternZoom = (ctx, width, height) => {
   for (let m = -5; m <= 5; m++) {
     const xM = fringePosition(m, wavelength, props.params.frequency, props.params.concentration, props.params.distance)
     
-    let mIntensity
-    if (m === 0) {
-      mIntensity = 1.0
-    } else {
-      mIntensity = Math.max(0.05, Math.pow(0.6, Math.abs(m)))
-    }
+    const mIntensity = intensityDistribution(xM, wavelength, props.params.frequency, props.params.concentration, props.params.distance, props.params.gratingWidth)
+    const displayIntensity = Math.max(0.02, mIntensity)
     
     const px = xCenter + (xM / (xMax - xMin)) * width
     
