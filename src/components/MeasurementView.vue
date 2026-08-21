@@ -434,12 +434,8 @@
                 <span class="summary-value">{{ filteredAnalysisResult.theoreticalSpeed.toFixed(2) }} m/s</span>
               </div>
               <div class="summary-item">
-                <span class="summary-label">相对误差</span>
+                <span class="summary-label">百分误差</span>
                 <span class="summary-value" :class="{ 'error-high': Math.abs(filteredAnalysisResult.relativeError) > 5 }">{{ filteredAnalysisResult.relativeError.toFixed(2) }}%</span>
-              </div>
-              <div class="summary-item">
-                <span class="summary-label">绝对误差</span>
-                <span class="summary-value" :class="{ 'error-high': filteredAnalysisResult.absoluteError > 5 }">{{ filteredAnalysisResult.absoluteError.toFixed(1) }} m/s</span>
               </div>
             </div>
             <div class="analysis-details">
@@ -451,7 +447,7 @@
                     <span class="stat-value">{{ filteredAnalysisResult.dataPoints }}</span>
                   </div>
                   <div class="stat-item">
-                    <span class="stat-label">百分误差</span>
+                    <span class="stat-label">标准差</span>
                     <span class="stat-value">{{ filteredAnalysisResult.stdDev.toFixed(1) }}%</span>
                   </div>
                   <div class="stat-item">
@@ -486,10 +482,10 @@
                 <div v-if="filteredAnalysisResult.analysisType === 'constantSpeed'" class="fit-params">
                   <div class="fit-param-item">
                     <span class="fit-param-label">验证指标</span>
-                    <span class="fit-param-value">声速恒定（百分误差 < 0.5%）</span>
+                    <span class="fit-param-value">声速恒定（标准差 < 0.5%）</span>
                   </div>
                   <div class="fit-param-item">
-                    <span class="fit-param-label">当前百分误差</span>
+                    <span class="fit-param-label">当前标准差</span>
                     <span class="fit-param-value" :class="{ 'good': filteredAnalysisResult.stdDev < 0.5, 'bad': filteredAnalysisResult.stdDev >= 0.5 }">{{ filteredAnalysisResult.stdDev.toFixed(1) }}%</span>
                   </div>
                   <div class="fit-formula">
@@ -1630,7 +1626,7 @@ const drawFitChart = () => {
     const stdDev = (absStdDev / avgSpeed) * 100
     ctx.fillText(`平均声速: ${avgSpeed.toFixed(2)} m/s`, 60, 76)
     ctx.fillText(`声速范围: ${minSpeed.toFixed(1)} ~ ${maxSpeed.toFixed(1)} m/s`, 60, 93)
-    ctx.fillText(`百分误差: ±${stdDev.toFixed(1)}%`, 60, 110)
+    ctx.fillText(`标准差: ±${stdDev.toFixed(1)}%`, 60, 110)
   }
   
   if (stats) {
@@ -1670,7 +1666,6 @@ const performAnalysis = () => {
     
     const theoreticalSpeed = getSoundSpeed(props.params.liquidTypeId || 'nacl', props.params.concentration, props.params.temperature)
     const relativeError = Math.abs(((experimentalSpeed - theoreticalSpeed) / theoreticalSpeed) * 100)
-    const absoluteError = Math.abs(experimentalSpeed - theoreticalSpeed)
     
     const variance = speeds.reduce((acc, v) => acc + Math.pow(v - experimentalSpeed, 2), 0) / speeds.length
     const absStdDev = Math.sqrt(variance)
@@ -1722,7 +1717,6 @@ const performAnalysis = () => {
       experimentalSpeed,
       theoreticalSpeed,
       relativeError,
-      absoluteError,
       dataPoints: records.length,
       stdDev,
       cv,
@@ -1834,7 +1828,6 @@ const performAnalysis = () => {
       experimentalSpeed: avgSpeed,
       theoreticalSpeed: theoreticalIntercept + theoreticalSlope * props.params.concentration,
       relativeError: avgRelativeError,
-      absoluteError: Math.abs(avgSpeed - (theoreticalIntercept + theoreticalSlope * props.params.concentration)),
       dataPoints: records.length,
       stdDev,
       cv,
@@ -2499,7 +2492,7 @@ const drawFitChartZoom = (ctx, width, height) => {
     const stdDev = (absStdDev / avgSpeed) * 100
     ctx.fillText(`平均声速: ${avgSpeed.toFixed(2)} m/s`, 70, 94)
     ctx.fillText(`声速范围: ${minSpeed.toFixed(1)} ~ ${maxSpeed.toFixed(1)} m/s`, 70, 117)
-    ctx.fillText(`百分误差: ±${stdDev.toFixed(1)}%`, 70, 140)
+    ctx.fillText(`标准差: ±${stdDev.toFixed(1)}%`, 70, 140)
   }
   
   if (stats) {

@@ -166,19 +166,13 @@
                       <span class="analysis-value">{{ getTheoreticalSpeed(mode.id).toFixed(2) }} m/s</span>
                     </div>
                     <div class="analysis-item">
-                      <span class="analysis-label">相对误差</span>
+                      <span class="analysis-label">百分误差</span>
                       <span class="analysis-value" :class="{ error: Math.abs(getRelativeError(mode.id)) > 5 }">
                         {{ getRelativeError(mode.id).toFixed(2) }}%
                       </span>
                     </div>
                     <div class="analysis-item">
-                      <span class="analysis-label">绝对误差</span>
-                      <span class="analysis-value" :class="{ error: getAbsoluteError(mode.id) > 5 }">
-                        {{ getAbsoluteError(mode.id).toFixed(1) }} m/s
-                      </span>
-                    </div>
-                    <div class="analysis-item">
-                      <span class="analysis-label">数据百分误差</span>
+                      <span class="analysis-label">数据标准差</span>
                       <span class="analysis-value">±{{ getStdDev(mode.id).toFixed(1) }}%</span>
                     </div>
                     <div class="analysis-item">
@@ -264,7 +258,7 @@
                         <th>条纹间距 (mm)</th>
                         <th>实测声速 (m/s)</th>
                         <th>理论声速 (m/s)</th>
-                        <th>相对误差 (%)</th>
+                        <th>百分误差 (%)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -313,7 +307,7 @@
                     <span class="analysis-value">3.460 m/s·°C</span>
                   </div>
                   <div class="analysis-item">
-                    <span class="analysis-label">相对误差</span>
+                    <span class="analysis-label">百分误差</span>
                     <span class="analysis-value" :class="{ error: Math.abs(getTemperatureOverallError()) > 5 }">
                       {{ getTemperatureOverallError().toFixed(2) }}%
                     </span>
@@ -658,12 +652,6 @@ const getRelativeError = (modeId) => {
   return ((expSpeed - theoSpeed) / theoSpeed) * 100
 }
 
-const getAbsoluteError = (modeId) => {
-  const expSpeed = getAverageSpeed(modeId)
-  const theoSpeed = getTheoreticalSpeed(modeId)
-  return Math.abs(expSpeed - theoSpeed)
-}
-
 const getStdDev = (modeId) => {
   const records = getModeRecords(modeId)
   if (records.length < 2) return 0
@@ -690,11 +678,11 @@ const getConclusion = (modeId) => {
   const consistency = getConsistency(modeId)
   
   if (modeId === 'wavelength') {
-    return `通过改变入射光波长（${Math.min(...records.map(r => r.wavelength))}~${Math.max(...records.map(r => r.wavelength))} nm），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，相对误差为 ${Math.abs(error).toFixed(2)}%，绝对误差为 ${getAbsoluteError(modeId).toFixed(1)} m/s。数据一致性为${consistency}，实验结果表明声速与入射光波长无关，符合理论预期。`
+    return `通过改变入射光波长（${Math.min(...records.map(r => r.wavelength))}~${Math.max(...records.map(r => r.wavelength))} nm），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，百分误差为 ${Math.abs(error).toFixed(2)}%。数据一致性为${consistency}，实验结果表明声速与入射光波长无关，符合理论预期。`
   }
   
   if (modeId === 'frequency') {
-    return `通过改变超声频率（${Math.min(...records.map(r => r.frequency))}~${Math.max(...records.map(r => r.frequency))} MHz），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，相对误差为 ${Math.abs(error).toFixed(2)}%，绝对误差为 ${getAbsoluteError(modeId).toFixed(1)} m/s。数据一致性为${consistency}，实验结果表明声速与超声频率无关，符合理论预期。`
+    return `通过改变超声频率（${Math.min(...records.map(r => r.frequency))}~${Math.max(...records.map(r => r.frequency))} MHz），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，百分误差为 ${Math.abs(error).toFixed(2)}%。数据一致性为${consistency}，实验结果表明声速与超声频率无关，符合理论预期。`
   }
   
   if (modeId === 'concentration') {
@@ -872,7 +860,7 @@ const getTemperatureConclusion = () => {
   const consistency = getTemperatureConsistency()
   const temps = records.map(r => r.temperature).filter(t => t !== undefined && t !== null)
   
-  return `在纯水中进行温度调节实验，温度范围为 ${Math.min(...temps).toFixed(1)}~${Math.max(...temps).toFixed(1)}°C。测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${avgTheoSpeed.toFixed(1)} m/s，相对误差为 ${Math.abs(error).toFixed(2)}%。通过线性拟合得到声速温度系数为 ${coefficient.toFixed(3)} m/s·°C，与理论值 3.460 m/s·°C 的偏差为 ${Math.abs(((coefficient - 3.46) / 3.46) * 100).toFixed(2)}%。数据一致性为${consistency}，实验结果表明纯水中声速随温度线性增加，符合理论预期。`
+  return `在纯水中进行温度调节实验，温度范围为 ${Math.min(...temps).toFixed(1)}~${Math.max(...temps).toFixed(1)}°C。测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${avgTheoSpeed.toFixed(1)} m/s，百分误差为 ${Math.abs(error).toFixed(2)}%。通过线性拟合得到声速温度系数为 ${coefficient.toFixed(3)} m/s·°C，与理论值 3.460 m/s·°C 的偏差为 ${Math.abs(((coefficient - 3.46) / 3.46) * 100).toFixed(2)}%。数据一致性为${consistency}，实验结果表明纯水中声速随温度线性增加，符合理论预期。`
 }
 
 const getTemperatureStatus = () => {
