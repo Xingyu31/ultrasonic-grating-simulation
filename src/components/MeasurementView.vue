@@ -435,7 +435,7 @@
               </div>
               <div class="summary-item">
                 <span class="summary-label">百分误差</span>
-                <span class="summary-value" :class="{ 'error-high': Math.abs(filteredAnalysisResult.relativeError) > 5 }">{{ filteredAnalysisResult.relativeError.toFixed(2) }}%</span>
+                <span class="summary-value" :class="{ 'error-high': Math.abs(filteredAnalysisResult.relativeError) > 5 }">{{ filteredAnalysisResult.relativeError.toFixed(1) }}%</span>
               </div>
             </div>
             <div class="analysis-details">
@@ -499,7 +499,7 @@
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">斜率误差</span>
-                    <span class="fit-param-value" :class="{ 'good': Math.abs(filteredAnalysisResult.slopeError) < 10, 'bad': Math.abs(filteredAnalysisResult.slopeError) >= 10 }">{{ filteredAnalysisResult.slopeError.toFixed(2) }}%</span>
+                    <span class="fit-param-value" :class="{ 'good': Math.abs(filteredAnalysisResult.slopeError) < 10, 'bad': Math.abs(filteredAnalysisResult.slopeError) >= 10 }">{{ filteredAnalysisResult.slopeError.toFixed(1) }}%</span>
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">拟合截距</span>
@@ -507,7 +507,7 @@
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">截距误差</span>
-                    <span class="fit-param-value" :class="{ 'good': Math.abs(filteredAnalysisResult.interceptError) < 2, 'bad': Math.abs(filteredAnalysisResult.interceptError) >= 2 }">{{ filteredAnalysisResult.interceptError.toFixed(2) }}%</span>
+                    <span class="fit-param-value" :class="{ 'good': Math.abs(filteredAnalysisResult.interceptError) < 2, 'bad': Math.abs(filteredAnalysisResult.interceptError) >= 2 }">{{ filteredAnalysisResult.interceptError.toFixed(1) }}%</span>
                   </div>
                   <div class="fit-formula">
                     理论公式: v = {{ filteredAnalysisResult.theoreticalIntercept }} + {{ filteredAnalysisResult.theoreticalSlope }} × c
