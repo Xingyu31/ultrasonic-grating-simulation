@@ -383,11 +383,11 @@ const drawInteractionFrame = (time = 0) => {
   ctx.fillRect(cellX, cellY, cellW, cellH)
   ctx.restore()
   for (let i = 0; i < 12; i += 1) {
-    const bandX = cellX + (i / 12) * cellW
+    const bandY = cellY + (i / 12) * cellH
     const phase = Math.sin(motionTime * 3.5 + i * 0.72)
     const alpha = 0.16 + 0.18 * (0.5 + phase * 0.5)
     ctx.fillStyle = `rgba(125, 211, 252, ${alpha.toFixed(2)})`
-    ctx.fillRect(bandX + phase * 1.5, cellY + 4, cellW * 0.045, cellH - 8)
+    ctx.fillRect(cellX + 4, bandY + phase * 1.5, cellW - 8, cellH * 0.045)
   }
   if (latticeProgress > 0) {
     cellSeeds.forEach((seed) => {
