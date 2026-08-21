@@ -267,9 +267,11 @@ const drawInteractionFrame = (time = 0) => {
   }
   ctx.fillStyle = 'rgba(226, 232, 240, 0.78)'
   ctx.font = '700 13px Microsoft YaHei'
+  ctx.textAlign = 'center'
   ctx.fillText('入射光', laserX + 18, 25)
-  ctx.fillText('超声驻波与粒子密度调制', cellX + 4, 25)
-  ctx.fillText('衍射条纹', screenX - 4, 25)
+  ctx.fillText('超声驻波与粒子密度调制', cellX + cellW / 2, 25)
+  ctx.fillText('衍射条纹', screenX + screenW / 2, 25)
+  ctx.textAlign = 'start'
   ctx.restore()
 
   const sourcePulse = animationVisible
