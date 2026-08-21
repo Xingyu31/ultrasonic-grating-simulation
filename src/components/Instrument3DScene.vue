@@ -996,13 +996,13 @@ const createInstruments = () => {
  createCCD();
  createComputer();
  usedInstruments.value = [];
+ updateCellGeneratorConnection();
+ alignOpticalAxis(false);
  Object.values(instruments).forEach(inst => {
  if (inst && inst.visible !== undefined) {
  inst.visible = false;
  }
  });
- updateCellGeneratorConnection();
- alignOpticalAxis(false);
  if (instruments.connection) {
  instruments.connection.visible = false;
  }
