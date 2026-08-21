@@ -447,8 +447,8 @@
                     <span class="stat-value">{{ filteredAnalysisResult.dataPoints }}</span>
                   </div>
                   <div class="stat-item">
-                    <span class="stat-label">标准差</span>
-                    <span class="stat-value">{{ filteredAnalysisResult.stdDev.toFixed(2) }}</span>
+                    <span class="stat-label">百分误差</span>
+                    <span class="stat-value">{{ filteredAnalysisResult.stdDev.toFixed(2) }}%</span>
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">变异系数</span>
@@ -482,11 +482,11 @@
                 <div v-if="filteredAnalysisResult.analysisType === 'constantSpeed'" class="fit-params">
                   <div class="fit-param-item">
                     <span class="fit-param-label">验证指标</span>
-                    <span class="fit-param-value">声速恒定（标准差 < 6 m/s）</span>
+                    <span class="fit-param-value">声速恒定（百分误差 < 0.5%）</span>
                   </div>
                   <div class="fit-param-item">
-                    <span class="fit-param-label">当前标准差</span>
-                    <span class="fit-param-value" :class="{ 'good': filteredAnalysisResult.stdDev < 6, 'bad': filteredAnalysisResult.stdDev >= 6 }">{{ filteredAnalysisResult.stdDev.toFixed(2) }} m/s</span>
+                    <span class="fit-param-label">当前百分误差</span>
+                    <span class="fit-param-value" :class="{ 'good': filteredAnalysisResult.stdDev < 0.5, 'bad': filteredAnalysisResult.stdDev >= 0.5 }">{{ filteredAnalysisResult.stdDev.toFixed(2) }}%</span>
                   </div>
                   <div class="fit-formula">
                     理论公式: v = 2kλfL / D（波长/频率变化，v恒定）
@@ -1622,10 +1622,11 @@ const drawFitChart = () => {
     const avgSpeed = speeds.reduce((acc, value) => acc + value, 0) / speeds.length
     const minSpeed = Math.min(...speeds)
     const maxSpeed = Math.max(...speeds)
-    const stdDev = Math.sqrt(speeds.reduce((acc, v) => acc + Math.pow(v - avgSpeed, 2), 0) / points.length)
+    const absStdDev = Math.sqrt(speeds.reduce((acc, v) => acc + Math.pow(v - avgSpeed, 2), 0) / points.length)
+    const stdDev = (absStdDev / avgSpeed) * 100
     ctx.fillText(`平均声速: ${avgSpeed.toFixed(2)} m/s`, 60, 76)
     ctx.fillText(`声速范围: ${minSpeed.toFixed(1)} ~ ${maxSpeed.toFixed(1)} m/s`, 60, 93)
-    ctx.fillText(`标准差: ±${stdDev.toFixed(2)} m/s`, 60, 110)
+    ctx.fillText(`百分误差: ±${stdDev.toFixed(2)}%`, 60, 110)
   }
   
   if (stats) {
@@ -1667,8 +1668,9 @@ const performAnalysis = () => {
     const relativeError = Math.abs(((experimentalSpeed - theoreticalSpeed) / theoreticalSpeed) * 100)
     
     const variance = speeds.reduce((acc, v) => acc + Math.pow(v - experimentalSpeed, 2), 0) / speeds.length
-    const stdDev = Math.sqrt(variance)
-    const cv = (stdDev / experimentalSpeed) * 100
+    const absStdDev = Math.sqrt(variance)
+    const stdDev = (absStdDev / experimentalSpeed) * 100
+    const cv = stdDev
     
     const sortedSpeeds = [...speeds].sort((a, b) => a - b)
     const median = sortedSpeeds[Math.floor(sortedSpeeds.length / 2)]
@@ -1678,17 +1680,17 @@ const performAnalysis = () => {
     const q3 = sortedSpeeds[Math.floor(sortedSpeeds.length * 0.75)]
     const iqr = q3 - q1
     
-    const outlierCount = speeds.filter(v => Math.abs(v - experimentalSpeed) > 3 * stdDev).length
-    const normalRangeLower = experimentalSpeed - 2 * stdDev
-    const normalRangeUpper = experimentalSpeed + 2 * stdDev
+    const outlierCount = speeds.filter(v => Math.abs(v - experimentalSpeed) > 3 * absStdDev).length
+    const normalRangeLower = experimentalSpeed - 2 * absStdDev
+    const normalRangeUpper = experimentalSpeed + 2 * absStdDev
     
     let consistency, suggestion, validationPass
     
-    if (stdDev < 3) {
+    if (stdDev < 0.2) {
       consistency = '优秀'
-    } else if (stdDev < 6) {
+    } else if (stdDev < 0.5) {
       consistency = '良好'
-    } else if (stdDev < 10) {
+    } else if (stdDev < 1) {
       consistency = '一般'
     } else {
       consistency = '较差'
@@ -1780,10 +1782,11 @@ const performAnalysis = () => {
     const predictedSpeeds = concentrations.map(c => slope * c + intercept)
     const residuals = speeds.map((v, i) => v - predictedSpeeds[i])
     const rss = residuals.reduce((acc, v) => acc + v * v, 0)
-    const stdDev = Math.sqrt(rss / n)
+    const absStdDev = Math.sqrt(rss / n)
     
     const avgSpeed = sumY / n
-    const cv = (stdDev / avgSpeed) * 100
+    const stdDev = (absStdDev / avgSpeed) * 100
+    const cv = stdDev
     
     const sortedSpeeds = [...speeds].sort((a, b) => a - b)
     const median = sortedSpeeds[Math.floor(sortedSpeeds.length / 2)]
@@ -1793,9 +1796,9 @@ const performAnalysis = () => {
     const q3 = sortedSpeeds[Math.floor(sortedSpeeds.length * 0.75)]
     const iqr = q3 - q1
     
-    const outlierCount = residuals.filter(v => Math.abs(v) > 3 * stdDev).length
-    const normalRangeLower = avgSpeed - 2 * stdDev
-    const normalRangeUpper = avgSpeed + 2 * stdDev
+    const outlierCount = residuals.filter(v => Math.abs(v) > 3 * absStdDev).length
+    const normalRangeLower = avgSpeed - 2 * absStdDev
+    const normalRangeUpper = avgSpeed + 2 * absStdDev
     
     let consistency, suggestion, validationPass
     
@@ -2485,10 +2488,11 @@ const drawFitChartZoom = (ctx, width, height) => {
     const avgSpeed = speeds.reduce((acc, value) => acc + value, 0) / speeds.length
     const minSpeed = Math.min(...speeds)
     const maxSpeed = Math.max(...speeds)
-    const stdDev = Math.sqrt(speeds.reduce((acc, v) => acc + Math.pow(v - avgSpeed, 2), 0) / points.length)
+    const absStdDev = Math.sqrt(speeds.reduce((acc, v) => acc + Math.pow(v - avgSpeed, 2), 0) / points.length)
+    const stdDev = (absStdDev / avgSpeed) * 100
     ctx.fillText(`平均声速: ${avgSpeed.toFixed(2)} m/s`, 70, 94)
     ctx.fillText(`声速范围: ${minSpeed.toFixed(1)} ~ ${maxSpeed.toFixed(1)} m/s`, 70, 117)
-    ctx.fillText(`标准差: ±${stdDev.toFixed(2)} m/s`, 70, 140)
+    ctx.fillText(`百分误差: ±${stdDev.toFixed(2)}%`, 70, 140)
   }
   
   if (stats) {
