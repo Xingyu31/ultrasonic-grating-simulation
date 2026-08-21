@@ -168,12 +168,12 @@
                     <div class="analysis-item">
                       <span class="analysis-label">相对误差</span>
                       <span class="analysis-value" :class="{ error: Math.abs(getRelativeError(mode.id)) > 5 }">
-                        {{ getRelativeError(mode.id).toFixed(2) }}%
+                        {{ getRelativeError(mode.id).toFixed(1) }}%
                       </span>
                     </div>
                     <div class="analysis-item">
                       <span class="analysis-label">数据百分误差</span>
-                      <span class="analysis-value">±{{ getStdDev(mode.id).toFixed(2) }}%</span>
+                      <span class="analysis-value">±{{ getStdDev(mode.id).toFixed(1) }}%</span>
                     </div>
                     <div class="analysis-item">
                       <span class="analysis-label">数据一致性</span>
@@ -309,7 +309,7 @@
                   <div class="analysis-item">
                     <span class="analysis-label">相对误差</span>
                     <span class="analysis-value" :class="{ error: Math.abs(getTemperatureOverallError()) > 5 }">
-                      {{ getTemperatureOverallError().toFixed(2) }}%
+                      {{ getTemperatureOverallError().toFixed(1) }}%
                     </span>
                   </div>
                   <div class="analysis-item">
@@ -678,11 +678,11 @@ const getConclusion = (modeId) => {
   const consistency = getConsistency(modeId)
   
   if (modeId === 'wavelength') {
-    return `通过改变入射光波长（${Math.min(...records.map(r => r.wavelength))}~${Math.max(...records.map(r => r.wavelength))} nm），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，相对误差为 ${Math.abs(error).toFixed(2)}%。数据一致性为${consistency}，实验结果表明声速与入射光波长无关，符合理论预期。`
+    return `通过改变入射光波长（${Math.min(...records.map(r => r.wavelength))}~${Math.max(...records.map(r => r.wavelength))} nm），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，相对误差为 ${Math.abs(error).toFixed(1)}%。数据一致性为${consistency}，实验结果表明声速与入射光波长无关，符合理论预期。`
   }
   
   if (modeId === 'frequency') {
-    return `通过改变超声频率（${Math.min(...records.map(r => r.frequency))}~${Math.max(...records.map(r => r.frequency))} MHz），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，相对误差为 ${Math.abs(error).toFixed(2)}%。数据一致性为${consistency}，实验结果表明声速与超声频率无关，符合理论预期。`
+    return `通过改变超声频率（${Math.min(...records.map(r => r.frequency))}~${Math.max(...records.map(r => r.frequency))} MHz），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，相对误差为 ${Math.abs(error).toFixed(1)}%。数据一致性为${consistency}，实验结果表明声速与超声频率无关，符合理论预期。`
   }
   
   if (modeId === 'concentration') {

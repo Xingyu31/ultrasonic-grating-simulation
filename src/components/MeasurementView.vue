@@ -435,7 +435,7 @@
               </div>
               <div class="summary-item">
                 <span class="summary-label">相对误差</span>
-                <span class="summary-value" :class="{ 'error-high': Math.abs(filteredAnalysisResult.relativeError) > 5 }">{{ filteredAnalysisResult.relativeError.toFixed(2) }}%</span>
+                <span class="summary-value" :class="{ 'error-high': Math.abs(filteredAnalysisResult.relativeError) > 5 }">{{ filteredAnalysisResult.relativeError.toFixed(1) }}%</span>
               </div>
             </div>
             <div class="analysis-details">
@@ -448,7 +448,7 @@
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">百分误差</span>
-                    <span class="stat-value">{{ filteredAnalysisResult.stdDev.toFixed(2) }}%</span>
+                    <span class="stat-value">{{ filteredAnalysisResult.stdDev.toFixed(1) }}%</span>
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">变异系数</span>
@@ -486,7 +486,7 @@
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">当前百分误差</span>
-                    <span class="fit-param-value" :class="{ 'good': filteredAnalysisResult.stdDev < 0.5, 'bad': filteredAnalysisResult.stdDev >= 0.5 }">{{ filteredAnalysisResult.stdDev.toFixed(2) }}%</span>
+                    <span class="fit-param-value" :class="{ 'good': filteredAnalysisResult.stdDev < 0.5, 'bad': filteredAnalysisResult.stdDev >= 0.5 }">{{ filteredAnalysisResult.stdDev.toFixed(1) }}%</span>
                   </div>
                   <div class="fit-formula">
                     理论公式: v = 2kλfL / D（波长/频率变化，v恒定）
@@ -1626,7 +1626,7 @@ const drawFitChart = () => {
     const stdDev = (absStdDev / avgSpeed) * 100
     ctx.fillText(`平均声速: ${avgSpeed.toFixed(2)} m/s`, 60, 76)
     ctx.fillText(`声速范围: ${minSpeed.toFixed(1)} ~ ${maxSpeed.toFixed(1)} m/s`, 60, 93)
-    ctx.fillText(`百分误差: ±${stdDev.toFixed(2)}%`, 60, 110)
+    ctx.fillText(`百分误差: ±${stdDev.toFixed(1)}%`, 60, 110)
   }
   
   if (stats) {
@@ -2492,7 +2492,7 @@ const drawFitChartZoom = (ctx, width, height) => {
     const stdDev = (absStdDev / avgSpeed) * 100
     ctx.fillText(`平均声速: ${avgSpeed.toFixed(2)} m/s`, 70, 94)
     ctx.fillText(`声速范围: ${minSpeed.toFixed(1)} ~ ${maxSpeed.toFixed(1)} m/s`, 70, 117)
-    ctx.fillText(`百分误差: ±${stdDev.toFixed(2)}%`, 70, 140)
+    ctx.fillText(`百分误差: ±${stdDev.toFixed(1)}%`, 70, 140)
   }
   
   if (stats) {
