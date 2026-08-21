@@ -435,7 +435,7 @@
               </div>
               <div class="summary-item">
                 <span class="summary-label">百分误差</span>
-                <span class="summary-value" :class="{ 'error-high': Math.abs(filteredAnalysisResult.relativeError) > 5 }">{{ filteredAnalysisResult.relativeError.toFixed(1) }}%</span>
+                <span class="summary-value" :class="{ 'error-high': Math.abs(filteredAnalysisResult.relativeError) > 5 }">{{ filteredAnalysisResult.relativeError.toFixed(2) }}%</span>
               </div>
             </div>
             <div class="analysis-details">
@@ -448,7 +448,7 @@
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">标准差</span>
-                    <span class="stat-value">{{ filteredAnalysisResult.stdDev.toFixed(1) }} m/s</span>
+                    <span class="stat-value">{{ toOneSigDigit(filteredAnalysisResult.stdDev) }} m/s</span>
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">变异系数</span>
@@ -486,7 +486,7 @@
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">当前标准差</span>
-                    <span class="fit-param-value" :class="{ 'good': filteredAnalysisResult.stdDev < 6, 'bad': filteredAnalysisResult.stdDev >= 6 }">{{ filteredAnalysisResult.stdDev.toFixed(1) }} m/s</span>
+                    <span class="fit-param-value" :class="{ 'good': filteredAnalysisResult.stdDev < 6, 'bad': filteredAnalysisResult.stdDev >= 6 }">{{ toOneSigDigit(filteredAnalysisResult.stdDev) }} m/s</span>
                   </div>
                   <div class="fit-formula">
                     理论公式: v = 2kλfL / D（波长/频率变化，v恒定）
@@ -499,7 +499,7 @@
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">斜率误差</span>
-                    <span class="fit-param-value" :class="{ 'good': Math.abs(filteredAnalysisResult.slopeError) < 10, 'bad': Math.abs(filteredAnalysisResult.slopeError) >= 10 }">{{ filteredAnalysisResult.slopeError.toFixed(1) }}%</span>
+                    <span class="fit-param-value" :class="{ 'good': Math.abs(filteredAnalysisResult.slopeError) < 10, 'bad': Math.abs(filteredAnalysisResult.slopeError) >= 10 }">{{ filteredAnalysisResult.slopeError.toFixed(2) }}%</span>
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">拟合截距</span>
@@ -507,7 +507,7 @@
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">截距误差</span>
-                    <span class="fit-param-value" :class="{ 'good': Math.abs(filteredAnalysisResult.interceptError) < 2, 'bad': Math.abs(filteredAnalysisResult.interceptError) >= 2 }">{{ filteredAnalysisResult.interceptError.toFixed(1) }}%</span>
+                    <span class="fit-param-value" :class="{ 'good': Math.abs(filteredAnalysisResult.interceptError) < 2, 'bad': Math.abs(filteredAnalysisResult.interceptError) >= 2 }">{{ filteredAnalysisResult.interceptError.toFixed(2) }}%</span>
                   </div>
                   <div class="fit-formula">
                     理论公式: v = {{ filteredAnalysisResult.theoreticalIntercept }} + {{ filteredAnalysisResult.theoreticalSlope }} × c
@@ -641,6 +641,13 @@ import {
   liquidConfigs,
   simulateMeasurement
 } from '../utils/physics.js'
+
+const toOneSigDigit = (x) => {
+  if (x === 0) return 0
+  const mag = Math.floor(Math.log10(Math.abs(x)))
+  const factor = Math.pow(10, -mag)
+  return Math.round(x * factor) / factor
+}
 
 const props = defineProps({
   params: Object,
@@ -1626,7 +1633,7 @@ const drawFitChart = () => {
     const stdDev = absStdDev
     ctx.fillText(`平均声速: ${avgSpeed.toFixed(2)} m/s`, 60, 76)
     ctx.fillText(`声速范围: ${minSpeed.toFixed(1)} ~ ${maxSpeed.toFixed(1)} m/s`, 60, 93)
-    ctx.fillText(`标准差: ${stdDev.toFixed(1)} m/s`, 60, 110)
+    ctx.fillText(`标准差: ${toOneSigDigit(stdDev)} m/s`, 60, 110)
   }
   
   if (stats) {
@@ -2492,7 +2499,7 @@ const drawFitChartZoom = (ctx, width, height) => {
     const stdDev = absStdDev
     ctx.fillText(`平均声速: ${avgSpeed.toFixed(2)} m/s`, 70, 94)
     ctx.fillText(`声速范围: ${minSpeed.toFixed(1)} ~ ${maxSpeed.toFixed(1)} m/s`, 70, 117)
-    ctx.fillText(`标准差: ${stdDev.toFixed(1)} m/s`, 70, 140)
+    ctx.fillText(`标准差: ${toOneSigDigit(stdDev)} m/s`, 70, 140)
   }
   
   if (stats) {

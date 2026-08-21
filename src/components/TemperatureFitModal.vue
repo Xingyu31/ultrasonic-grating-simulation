@@ -68,7 +68,7 @@
             </div>
             <div class="result-row">
               <span class="result-label">斜率误差：</span>
-              <span class="result-value">{{ fitResult.slopeError.toFixed(1) }}%</span>
+              <span class="result-value">{{ fitResult.slopeError.toFixed(2) }}%</span>
             </div>
             <div class="result-row">
               <span class="result-label">相关系数 R²：</span>

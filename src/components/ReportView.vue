@@ -168,12 +168,12 @@
                     <div class="analysis-item">
                       <span class="analysis-label">百分误差</span>
                       <span class="analysis-value" :class="{ error: Math.abs(getRelativeError(mode.id)) > 5 }">
-                        {{ getRelativeError(mode.id).toFixed(1) }}%
+                        {{ getRelativeError(mode.id).toFixed(2) }}%
                       </span>
                     </div>
                     <div class="analysis-item">
                       <span class="analysis-label">数据标准差</span>
-                      <span class="analysis-value">{{ getStdDev(mode.id).toFixed(1) }} m/s</span>
+                      <span class="analysis-value">{{ toOneSigDigit(getStdDev(mode.id)) }} m/s</span>
                     </div>
                     <div class="analysis-item">
                       <span class="analysis-label">数据一致性</span>
@@ -309,7 +309,7 @@
                   <div class="analysis-item">
                     <span class="analysis-label">百分误差</span>
                     <span class="analysis-value" :class="{ error: Math.abs(getTemperatureOverallError()) > 5 }">
-                      {{ getTemperatureOverallError().toFixed(1) }}%
+                      {{ getTemperatureOverallError().toFixed(2) }}%
                     </span>
                   </div>
                   <div class="analysis-item">
@@ -436,6 +436,13 @@
 import { computed, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getReportArchives, saveReportArchive, deleteReportArchive } from '../utils/reportArchive'
+
+const toOneSigDigit = (x) => {
+  if (x === 0) return 0
+  const mag = Math.floor(Math.log10(Math.abs(x)))
+  const factor = Math.pow(10, -mag)
+  return Math.round(x * factor) / factor
+}
 
 const props = defineProps({
   records: {
@@ -680,11 +687,11 @@ const getConclusion = (modeId) => {
   const consistency = getConsistency(modeId)
   
   if (modeId === 'wavelength') {
-    return `通过改变入射光波长（${Math.min(...records.map(r => r.wavelength))}~${Math.max(...records.map(r => r.wavelength))} nm），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，百分误差为 ${Math.abs(error).toFixed(1)}%。数据一致性为${consistency}，实验结果表明声速与入射光波长无关，符合理论预期。`
+    return `通过改变入射光波长（${Math.min(...records.map(r => r.wavelength))}~${Math.max(...records.map(r => r.wavelength))} nm），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，百分误差为 ${Math.abs(error).toFixed(2)}%。数据一致性为${consistency}，实验结果表明声速与入射光波长无关，符合理论预期。`
   }
   
   if (modeId === 'frequency') {
-    return `通过改变超声频率（${Math.min(...records.map(r => r.frequency))}~${Math.max(...records.map(r => r.frequency))} MHz），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，百分误差为 ${Math.abs(error).toFixed(1)}%。数据一致性为${consistency}，实验结果表明声速与超声频率无关，符合理论预期。`
+    return `通过改变超声频率（${Math.min(...records.map(r => r.frequency))}~${Math.max(...records.map(r => r.frequency))} MHz），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${theoSpeed.toFixed(1)} m/s，百分误差为 ${Math.abs(error).toFixed(2)}%。数据一致性为${consistency}，实验结果表明声速与超声频率无关，符合理论预期。`
   }
   
   if (modeId === 'concentration') {
@@ -705,7 +712,7 @@ const getConclusion = (modeId) => {
     const theoIntercept = liquidData.baseSpeed
     const slopeError = Math.abs(((slope - theoSlope) / theoSlope) * 100)
     
-    return `通过改变液体浓度（${Math.min(...concentrations).toFixed(2)}~${Math.max(...concentrations).toFixed(2)} wt%），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s。线性拟合得到声速与浓度的关系为 v = ${slope.toFixed(2)} × c + ${intercept.toFixed(1)}。理论公式为 v = ${theoIntercept} + ${theoSlope} × c，拟合斜率与理论值的偏差为 ${slopeError.toFixed(1)}%。实验结果表明声速随浓度线性变化，符合理论预期。`
+    return `通过改变液体浓度（${Math.min(...concentrations).toFixed(2)}~${Math.max(...concentrations).toFixed(2)} wt%），测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s。线性拟合得到声速与浓度的关系为 v = ${slope.toFixed(2)} × c + ${intercept.toFixed(1)}。理论公式为 v = ${theoIntercept} + ${theoSlope} × c，拟合斜率与理论值的偏差为 ${slopeError.toFixed(2)}%。实验结果表明声速随浓度线性变化，符合理论预期。`
   }
   
   return ''
@@ -862,7 +869,7 @@ const getTemperatureConclusion = () => {
   const consistency = getTemperatureConsistency()
   const temps = records.map(r => r.temperature).filter(t => t !== undefined && t !== null)
   
-  return `在纯水中进行温度调节实验，温度范围为 ${Math.min(...temps).toFixed(1)}~${Math.max(...temps).toFixed(1)}°C。测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${avgTheoSpeed.toFixed(1)} m/s，百分误差为 ${Math.abs(error).toFixed(1)}%。通过线性拟合得到声速温度系数为 ${coefficient.toFixed(3)} m/s·°C，与理论值 3.460 m/s·°C 的偏差为 ${Math.abs(((coefficient - 3.46) / 3.46) * 100).toFixed(1)}%。数据一致性为${consistency}，实验结果表明纯水中声速随温度线性增加，符合理论预期。`
+  return `在纯水中进行温度调节实验，温度范围为 ${Math.min(...temps).toFixed(1)}~${Math.max(...temps).toFixed(1)}°C。测量得到声速平均值为 ${avgSpeed.toFixed(1)} m/s，理论声速为 ${avgTheoSpeed.toFixed(1)} m/s，百分误差为 ${Math.abs(error).toFixed(2)}%。通过线性拟合得到声速温度系数为 ${coefficient.toFixed(3)} m/s·°C，与理论值 3.460 m/s·°C 的偏差为 ${Math.abs(((coefficient - 3.46) / 3.46) * 100).toFixed(2)}%。数据一致性为${consistency}，实验结果表明纯水中声速随温度线性增加，符合理论预期。`
 }
 
 const getTemperatureStatus = () => {
