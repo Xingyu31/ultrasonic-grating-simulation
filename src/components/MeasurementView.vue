@@ -448,7 +448,7 @@
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">标准差</span>
-                    <span class="stat-value">±{{ filteredAnalysisResult.stdDev.toFixed(2) }}</span>
+                    <span class="stat-value">{{ filteredAnalysisResult.stdDev.toFixed(2) }}</span>
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">变异系数</span>
@@ -1664,7 +1664,7 @@ const performAnalysis = () => {
     const experimentalSpeed = sumSpeed / speeds.length
     
     const theoreticalSpeed = getSoundSpeed(props.params.liquidTypeId || 'nacl', props.params.concentration, props.params.temperature)
-    const relativeError = ((experimentalSpeed - theoreticalSpeed) / theoreticalSpeed) * 100
+    const relativeError = Math.abs(((experimentalSpeed - theoreticalSpeed) / theoreticalSpeed) * 100)
     
     const variance = speeds.reduce((acc, v) => acc + Math.pow(v - experimentalSpeed, 2), 0) / speeds.length
     const stdDev = Math.sqrt(variance)
@@ -1816,7 +1816,7 @@ const performAnalysis = () => {
       suggestion = '拟合结果与理论偏差较大，请检查实验设置或重新进行实验。'
     }
     
-    const avgRelativeError = ((slopeError + interceptError) / 2)
+    const avgRelativeError = Math.abs((slopeError + interceptError) / 2)
     
     analysisResultData = {
       mode: '📊 液体浓度影响',
