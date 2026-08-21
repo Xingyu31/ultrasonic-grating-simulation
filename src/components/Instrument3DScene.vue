@@ -36,7 +36,7 @@
         <button class="control-btn-small" @click="removeInstrument">移除</button>
       </div>
     </div>
-    <div class="alignment-hud" :class="alignmentStatus.level">
+    <div class="alignment-hud" v-if="showAlignment" :class="alignmentStatus.level">
       <div class="alignment-title">等高共轴状态</div>
       <div class="alignment-state">{{ alignmentStatus.text }}</div>
       <div class="alignment-detail">{{ alignmentStatus.detail }}</div>
@@ -161,6 +161,17 @@ const alignmentStatus = ref({
  detail: '最大高度差 0.0，横向偏差 0.0',
  tip: '只需微调旋转或对焦即可进入测量。'
 });
+const showAlignment = ref(true);
+let alignmentTimer = null;
+const startAlignmentTimer = () => {
+ showAlignment.value = true;
+ if (alignmentTimer) {
+ clearTimeout(alignmentTimer);
+ }
+ alignmentTimer = setTimeout(() => {
+ showAlignment.value = false;
+ }, 10000);
+};
 const initScene = () => {
  if (!canvasContainerRef.value)
  return;
@@ -279,7 +290,7 @@ const setupTable = () => {
 const setupOpticalRail = () => {
  const railGroup = new THREE.Group();
  const railMaterial = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.32, metalness: 0.85 });
- const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.2 });
+ const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0x00FFFF, transparent: true, opacity: 0.55 });
  const railLength = 29;
  [-0.48, 0.48].forEach(z => {
  const rail = new THREE.Mesh(new THREE.BoxGeometry(railLength, 0.08, 0.08), railMaterial);
@@ -288,7 +299,7 @@ const setupOpticalRail = () => {
  rail.receiveShadow = true;
  railGroup.add(rail);
  });
- const axisGuide = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, railLength, 16), highlightMaterial);
+ const axisGuide = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, railLength, 16), highlightMaterial);
  axisGuide.rotation.z = Math.PI / 2;
  axisGuide.position.set(-3, OPTICAL_AXIS_Y, OPTICAL_AXIS_Z);
  railGroup.add(axisGuide);
@@ -1085,6 +1096,7 @@ const angleDelta = (angle, target) => {
  return Math.abs((((angle - target) + Math.PI) % twoPi + twoPi) % twoPi - Math.PI);
 };
 const updateAlignmentStatus = () => {
+ startAlignmentTimer();
  const centers = ['laser', 'collimator', 'cell', 'telescope', 'ccd'].map(getOpticalCenter).filter(Boolean);
  if (centers.length < 3) {
  alignmentStatus.value = {
@@ -1939,6 +1951,9 @@ onUnmounted(() => {
  canvasContainerRef.value?.removeEventListener('wheel', onWheel);
  canvasContainerRef.value?.removeEventListener('click', onClick);
  canvasContainerRef.value?.removeEventListener('dblclick', onDoubleClick);
+ if (alignmentTimer) {
+ clearTimeout(alignmentTimer);
+ }
  if (renderer) {
  renderer.dispose();
  }

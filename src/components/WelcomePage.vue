@@ -139,7 +139,7 @@ const startInteractionDemo = () => {
   demoStartTime = performance.now()
 }
 
-const particlePalette = ['#60a5fa']
+const particlePalette = ['#00ffff']
 
 const hash01 = (index, salt = 0) => {
   const x = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453
@@ -185,7 +185,7 @@ const diffractedSeeds = Array.from({ length: 720 }, (_, index) => ({
 }))
 
 const beamThemes = [
-  { rgb: '96, 165, 250', core: '#60a5fa', soft: 'rgba(96, 165, 250, ALPHA)', glow: 'rgba(96, 165, 250, 0.88)', spectrum: false },
+  { rgb: '0, 255, 255', core: '#00ffff', soft: 'rgba(0, 255, 255, ALPHA)', glow: 'rgba(0, 255, 255, 0.98)', spectrum: false },
 ]
 
 const roundedRect = (ctx, x, y, width, height, radius) => {
@@ -275,10 +275,10 @@ const drawInteractionFrame = (time = 0) => {
   ctx.save()
   const sourceRadius = 24 * sourcePulse
   const sourceGlow = ctx.createRadialGradient(laserX - 3, centerY - 3, 1, laserX, centerY, sourceRadius + 5)
-  sourceGlow.addColorStop(0, '#f8fafc')
-  sourceGlow.addColorStop(0.18, '#93c5fd')
-  sourceGlow.addColorStop(0.48, beamTheme.core)
-  sourceGlow.addColorStop(0.78, beamTheme.soft.replace('ALPHA', '0.48'))
+  sourceGlow.addColorStop(0, '#ffffff')
+  sourceGlow.addColorStop(0.15, '#ccf5ff')
+  sourceGlow.addColorStop(0.4, beamTheme.core)
+  sourceGlow.addColorStop(0.7, beamTheme.soft.replace('ALPHA', '0.55'))
   sourceGlow.addColorStop(1, beamTheme.soft.replace('ALPHA', '0'))
   ctx.fillStyle = sourceGlow
   ctx.shadowColor = beamTheme.glow
@@ -286,8 +286,8 @@ const drawInteractionFrame = (time = 0) => {
   ctx.beginPath()
   ctx.arc(laserX, centerY, sourceRadius, 0, Math.PI * 2)
   ctx.fill()
-  ctx.fillStyle = '#eff6ff'
-  ctx.globalAlpha = 0.72
+  ctx.fillStyle = '#ffffff'
+  ctx.globalAlpha = 0.85
   ctx.beginPath()
   ctx.arc(laserX - 3, centerY - 3, 5.6 * sourcePulse, 0, Math.PI * 2)
   ctx.fill()
@@ -349,7 +349,7 @@ const drawInteractionFrame = (time = 0) => {
       })
       if (sourceProgress > 0.84) {
         const entryGlow = Math.min(1, (sourceProgress - 0.84) / 0.16)
-        emit(cellX + 8, centerY, 3.8, 0.35 * entryGlow, '#dbeafe')
+        emit(cellX + 8, centerY, 3.8, 0.35 * entryGlow, beamTheme.core)
       }
     }
   }
@@ -357,13 +357,13 @@ const drawInteractionFrame = (time = 0) => {
   // Liquid cell and its oscillating compressions remain visible throughout the demonstration.
   ctx.save()
   const cellGradient = ctx.createLinearGradient(cellX, cellY, cellX + cellW, cellY + cellH)
-  cellGradient.addColorStop(0, 'rgba(56, 189, 248, 0.16)')
-  cellGradient.addColorStop(0.5, 'rgba(14, 165, 233, 0.36)')
-  cellGradient.addColorStop(1, 'rgba(20, 184, 166, 0.18)')
+  cellGradient.addColorStop(0, 'rgba(0, 255, 255, 0.25)')
+  cellGradient.addColorStop(0.5, 'rgba(0, 200, 255, 0.45)')
+  cellGradient.addColorStop(1, 'rgba(100, 255, 255, 0.25)')
   ctx.fillStyle = cellGradient
   roundedRect(ctx, cellX, cellY, cellW, cellH, 10)
   ctx.fill()
-  ctx.strokeStyle = 'rgba(186, 230, 253, 0.7)'
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)'
   ctx.lineWidth = 1.5
   ctx.stroke()
   ctx.save()
@@ -377,16 +377,16 @@ const drawInteractionFrame = (time = 0) => {
     cellY + cellH * 0.5,
     cellW * 0.7
   )
-  cellFog.addColorStop(0, 'rgba(191, 219, 254, 0.11)')
-  cellFog.addColorStop(1, 'rgba(56, 189, 248, 0)')
+  cellFog.addColorStop(0, 'rgba(200, 255, 255, 0.18)')
+  cellFog.addColorStop(1, 'rgba(0, 255, 255, 0)')
   ctx.fillStyle = cellFog
   ctx.fillRect(cellX, cellY, cellW, cellH)
   ctx.restore()
   for (let i = 0; i < 12; i += 1) {
     const bandY = cellY + (i / 12) * cellH
     const phase = Math.sin(motionTime * 3.5 + i * 0.72)
-    const alpha = 0.16 + 0.18 * (0.5 + phase * 0.5)
-    ctx.fillStyle = `rgba(125, 211, 252, ${alpha.toFixed(2)})`
+    const alpha = 0.28 + 0.28 * (0.5 + phase * 0.5)
+    ctx.fillStyle = `rgba(0, 255, 255, ${alpha.toFixed(2)})`
     ctx.fillRect(cellX + 4, bandY + phase * 1.5, cellW - 8, cellH * 0.045)
   }
   if (latticeProgress > 0) {
@@ -449,7 +449,7 @@ const drawInteractionFrame = (time = 0) => {
   ctx.fillStyle = screenGradient
   roundedRect(ctx, screenX, screenY, screenW, screenH, 10)
   ctx.fill()
-  ctx.strokeStyle = 'rgba(191, 219, 254, 0.78)'
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.9)'
   ctx.lineWidth = 1.4
   ctx.stroke()
   ctx.save()
@@ -457,8 +457,8 @@ const drawInteractionFrame = (time = 0) => {
   ctx.clip()
   const glassSheen = ctx.createLinearGradient(screenX, screenY, screenX + screenW, screenY)
   glassSheen.addColorStop(0, 'rgba(255, 255, 255, 0)')
-  glassSheen.addColorStop(0.45, 'rgba(191, 219, 254, 0.09)')
-  glassSheen.addColorStop(0.58, 'rgba(255, 255, 255, 0.02)')
+  glassSheen.addColorStop(0.45, 'rgba(0, 255, 255, 0.15)')
+  glassSheen.addColorStop(0.58, 'rgba(255, 255, 255, 0.04)')
   glassSheen.addColorStop(1, 'rgba(255, 255, 255, 0)')
   ctx.fillStyle = glassSheen
   ctx.fillRect(screenX, screenY, screenW, screenH)
@@ -477,17 +477,17 @@ const drawInteractionFrame = (time = 0) => {
       const color = beamTheme.core
       const spotRadius = 13 + spot.size * 12
       const spotGlow = ctx.createRadialGradient(x, y, 0, x, y, spotRadius)
-      spotGlow.addColorStop(0, 'rgba(147, 197, 253, 0.94)')
-      spotGlow.addColorStop(0.18, 'rgba(96, 165, 250, 0.82)')
-      spotGlow.addColorStop(0.48, 'rgba(96, 165, 250, 0.24)')
-      spotGlow.addColorStop(1, 'rgba(96, 165, 250, 0)')
+      spotGlow.addColorStop(0, 'rgba(255, 255, 255, 0.98)')
+      spotGlow.addColorStop(0.12, beamTheme.glow)
+      spotGlow.addColorStop(0.4, beamTheme.soft.replace('ALPHA', '0.32'))
+      spotGlow.addColorStop(1, beamTheme.soft.replace('ALPHA', '0'))
       ctx.fillStyle = spotGlow
-      ctx.globalAlpha = spot.a * (0.48 + screenProgress * 0.52)
+      ctx.globalAlpha = spot.a * (0.52 + screenProgress * 0.48)
       ctx.beginPath()
       ctx.ellipse(x, y, spotRadius, spotRadius * 0.7, 0, 0, Math.PI * 2)
       ctx.fill()
-      ctx.fillStyle = color
-      ctx.globalAlpha = spot.a * (0.62 + screenProgress * 0.38)
+      ctx.fillStyle = '#ffffff'
+      ctx.globalAlpha = spot.a * (0.72 + screenProgress * 0.28)
       ctx.beginPath()
       ctx.ellipse(x, y, 2.8 + spot.size * 2.2, 3.8 + spot.size * 3.2, 0, 0, Math.PI * 2)
       ctx.fill()
