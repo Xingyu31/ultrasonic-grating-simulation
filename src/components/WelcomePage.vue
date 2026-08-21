@@ -241,13 +241,13 @@ const drawInteractionFrame = (time = 0) => {
   ctx.fill()
 
   const centerY = height * 0.52
-  const laserX = width * 0.075
-  const cellX = width * 0.43
-  const cellW = Math.min(220, width * 0.18)
-  const cellH = Math.min(116, height * 0.56)
+  const laserX = width * 0.1
+  const cellX = width * 0.42
+  const cellW = Math.min(75, width * 0.06)
+  const cellH = Math.min(100, height * 0.5)
   const cellY = centerY - cellH / 2
   const originX = cellX + cellW
-  const screenX = width * 0.855
+  const screenX = width * 0.75
   const screenW = Math.min(92, width * 0.09)
   const screenH = Math.min(196, height * 0.86)
   const screenY = centerY - screenH / 2
@@ -259,7 +259,7 @@ const drawInteractionFrame = (time = 0) => {
   ctx.strokeStyle = 'rgba(148, 163, 184, 0.12)'
   ctx.lineWidth = 1
   for (let i = 0; i < 8; i += 1) {
-    const x = width * 0.10 + i * width * 0.105
+    const x = width * 0.05 + i * width * 0.12
     ctx.beginPath()
     ctx.moveTo(x, height * 0.18)
     ctx.lineTo(x, height * 0.84)
