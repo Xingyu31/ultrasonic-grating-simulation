@@ -235,9 +235,10 @@
           </div>
           
           <div v-if="modalType === 'generator'" class="modal-section">
-            <label class="modal-label">超声频率 (MHz)</label>
-            <el-slider v-model="localParams.frequency" :min="5" :max="15" :step="0.1"
-                       show-input :input-size="'small'" />
+            <label class="modal-label">探头谐振频率 (MHz)</label>
+            <el-slider v-model="localParams.frequency" :min="4" :max="15" :step="1" :marks="resonanceMarks"
+                       show-input :input-size="'small'" @change="snapGeneratorFrequency" />
+            <div class="frequency-note">频率会吸附到离散谐振档位，避免连续频率仿真。</div>
             <label class="modal-label">信号幅度 (%)</label>
             <el-slider v-model="localParams.amplitude" :min="10" :max="100" :step="1"
                        show-input :input-size="'small'" />
@@ -298,6 +299,7 @@ import CcdSvg from './instrument-svgs/CcdSvg.vue'
 import GeneratorSvg from './instrument-svgs/GeneratorSvg.vue'
 import ComputerSvg from './instrument-svgs/ComputerSvg.vue'
 import { ElMessage } from 'element-plus'
+import { getResonanceMarks, snapToResonantFrequency } from '../utils/physics.js'
 
 const props = defineProps({
   params: {
@@ -312,7 +314,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:params', 'update:mode', 'openMeasure'])
 
-const localParams = reactive({ ...props.params })
+const localParams = reactive({ ...props.params, frequency: snapToResonantFrequency(props.params.frequency) })
+const resonanceMarks = getResonanceMarks()
 const instruments = ref([])
 const showGuide = ref(true)
 const showModal = ref(false)
@@ -331,11 +334,15 @@ const progressSteps = [
   { text: '对焦测量', done: false }
 ]
 
+const snapGeneratorFrequency = () => {
+  localParams.frequency = snapToResonantFrequency(localParams.frequency)
+}
+
 const currentModeInfo = computed(() => {
   if (props.experimentMode === 'wavelength') {
     return { variable: '光波长', fixed: '频率8MHz，浓度未知' }
   } else if (props.experimentMode === 'frequency') {
-    return { variable: '超声频率', fixed: '波长600nm，浓度未知' }
+    return { variable: '探头谐振频率档位', fixed: '波长600nm，浓度未知' }
   }
   return { variable: '-', fixed: '-' }
 })
@@ -1044,6 +1051,17 @@ onUnmounted(() => {
 .modal-label {
   font-size: 13px;
   color: #94a3b8;
+}
+
+.frequency-note {
+  margin-top: -8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(251, 191, 36, 0.32);
+  border-radius: 6px;
+  background: rgba(120, 53, 15, 0.22);
+  color: #fde68a;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .cell-info {

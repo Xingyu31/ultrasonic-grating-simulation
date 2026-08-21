@@ -32,11 +32,12 @@
           </div>
           
           <div class="param-row">
-            <label class="param-label">超声频率</label>
+            <label class="param-label">探头谐振频率</label>
             <div class="param-control">
-              <el-slider v-model="localParams.frequency" :min="5" :max="15" :step="0.1" 
+              <el-slider v-model="localParams.frequency" :min="4" :max="15" :step="1" :marks="resonanceMarks"
                          show-input :input-size="'small'" @change="onParamChange" />
               <span class="param-unit">MHz</span>
+              <div class="param-hint">拖动后自动吸附到最近探头谐振档位。</div>
             </div>
           </div>
           
@@ -216,6 +217,7 @@
 import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import ZoomModal from './ZoomModal.vue'
 import { ElMessage } from 'element-plus'
+import { getResonanceMarks, snapToResonantFrequency } from '../utils/physics.js'
 
 const props = defineProps({
   archive: {
@@ -230,7 +232,8 @@ const props = defineProps({
 
 const emit = defineEmits(['exit', 'openInstrument'])
 
-const localParams = reactive({ ...props.params })
+const localParams = reactive({ ...props.params, frequency: snapToResonantFrequency(props.params.frequency) })
+const resonanceMarks = getResonanceMarks()
 const records = ref([])
 
 const mainCanvas = ref(null)
@@ -1000,6 +1003,7 @@ const closeZoomModal = () => {
 }
 
 const onParamChange = () => {
+  localParams.frequency = snapToResonantFrequency(localParams.frequency)
   if (experimentVs.value) {
     nextTick(() => {
       drawDiffractionPattern(mainCanvas.value?.getContext('2d'), mainCanvas.value?.width, mainCanvas.value?.height)
@@ -1245,11 +1249,23 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .param-unit {
   font-size: 12px;
   color: #94a3b8;
+}
+
+.param-hint {
+  flex: 1 0 100%;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #fde68a;
+  padding: 6px 8px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 6px;
+  background: rgba(120, 53, 15, 0.22);
 }
 
 .param-value {

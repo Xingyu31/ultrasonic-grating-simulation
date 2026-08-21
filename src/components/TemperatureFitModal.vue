@@ -15,7 +15,7 @@
             </div>
             <div class="info-row">
               <span class="info-label">理论公式：</span>
-              <span class="info-value">v = 1398 + 3.46 × t</span>
+              <span class="info-value">0-80°C 纯水非线性声速模型</span>
             </div>
             <div class="info-row">
               <span class="info-label">温度范围：</span>
@@ -59,8 +59,8 @@
               <span class="result-value">v = {{ fitResult.slope.toFixed(3) }} × t + {{ fitResult.intercept.toFixed(2) }}</span>
             </div>
             <div class="result-row">
-              <span class="result-label">理论斜率：</span>
-              <span class="result-value">3.460 m/s/°C</span>
+              <span class="result-label">理论局部斜率：</span>
+              <span class="result-value">{{ fitResult.theorySlope.toFixed(3) }} m/s/°C</span>
             </div>
             <div class="result-row">
               <span class="result-label">实验斜率：</span>
@@ -101,6 +101,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { waterSoundSpeed } from '../utils/physics.js'
 
 const props = defineProps({
   show: {
@@ -149,9 +150,14 @@ const performLinearFit = (points) => {
   const rSquared = ssTot > 1e-10 ? 1 - (ssRes / ssTot) : 0
 
   const avgSpeed = meanY
-  const slopeError = Math.abs((slope - 3.46) / 3.46) * 100
+  const temperatures = points.map(p => p.x)
+  const minTemp = Math.min(...temperatures)
+  const maxTemp = Math.max(...temperatures)
+  const span = Math.max(maxTemp - minTemp, 1)
+  const theorySlope = (waterSoundSpeed(maxTemp) - waterSoundSpeed(minTemp)) / span
+  const slopeError = Math.abs(theorySlope) > 1e-10 ? Math.abs((slope - theorySlope) / theorySlope) * 100 : 0
 
-  return { slope, intercept, rSquared, avgSpeed, slopeError }
+  return { slope, intercept, rSquared, avgSpeed, slopeError, theorySlope }
 }
 
 const drawChart = () => {
@@ -229,7 +235,11 @@ const drawChart = () => {
 
   const xMin = 0
   const xMax = 80
-  const allY = points.map(p => p.y)
+  const theoryPoints = Array.from({ length: 81 }, (_, index) => ({
+    x: index,
+    y: waterSoundSpeed(index)
+  }))
+  const allY = [...points.map(p => p.y), ...theoryPoints.map(p => p.y)]
   const yMin = Math.min(...allY) - 20
   const yMax = Math.max(...allY) + 20
 
@@ -256,17 +266,22 @@ const drawChart = () => {
   ctx.lineWidth = 1.5
   ctx.setLineDash([6, 4])
   ctx.beginPath()
-  const theoryY1 = 1398 + 3.46 * xMin
-  const theoryY2 = 1398 + 3.46 * xMax
-  ctx.moveTo(60, height - 60 - (theoryY1 - yMin) * scaleY)
-  ctx.lineTo(width - 30, height - 60 - (theoryY2 - yMin) * scaleY)
+  theoryPoints.forEach((point, index) => {
+    const px = 60 + (point.x - xMin) * scaleX
+    const py = height - 60 - (point.y - yMin) * scaleY
+    if (index === 0) {
+      ctx.moveTo(px, py)
+    } else {
+      ctx.lineTo(px, py)
+    }
+  })
   ctx.stroke()
   ctx.setLineDash([])
 
   ctx.fillStyle = '#f59e0b'
   ctx.font = '10px Microsoft YaHei'
   ctx.textAlign = 'left'
-  ctx.fillText('理论: v=1398+3.46t', width - 180, 55)
+  ctx.fillText('理论: 纯水非线性曲线', width - 180, 55)
 
   ctx.fillStyle = '#3b82f6'
   ctx.strokeStyle = '#1d4ed8'

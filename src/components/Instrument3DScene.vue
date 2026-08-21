@@ -28,14 +28,23 @@
       <div class="instrument-controls">
         <button class="control-btn-small" :class="{ active: isMoving }" @click="toggleMove">移动</button>
         <button class="control-btn-small" :class="{ active: isRotating }" @click="toggleRotate">旋转</button>
+        <button class="control-btn-small" @click="adjustInstrumentHeight(0.06)">升高</button>
+        <button class="control-btn-small" @click="adjustInstrumentHeight(-0.06)">降低</button>
         <button class="control-btn-small" @click="fixInstrument" :disabled="fixedInstruments.includes(selectedInstrument.id)">
           {{ fixedInstruments.includes(selectedInstrument.id) ? '已固定' : '固定' }}
         </button>
         <button class="control-btn-small" @click="removeInstrument">移除</button>
       </div>
     </div>
+    <div class="alignment-hud" :class="alignmentStatus.level">
+      <div class="alignment-title">等高共轴状态</div>
+      <div class="alignment-state">{{ alignmentStatus.text }}</div>
+      <div class="alignment-detail">{{ alignmentStatus.detail }}</div>
+      <div class="alignment-tip">{{ alignmentStatus.tip }}</div>
+    </div>
     <div class="camera-controls">
       <button class="control-btn" @click="resetCamera">⟲ 复位</button>
+      <button class="control-btn" @click="alignOpticalAxis">共轴复位</button>
       <button class="control-btn" @click="rotateView(-1)">◀</button>
       <button class="control-btn" @click="rotateView(1)">▶</button>
       <button class="control-btn" @click="toggleAutoRotate">🔄</button>
@@ -101,6 +110,7 @@ let scene = null;
 let camera = null;
 let renderer = null;
 let controls = null;
+let isOrbitInteracting = false;
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const isDragging = ref(false);
@@ -109,6 +119,7 @@ const showInstrumentPanel = ref(true);
 let instruments = {};
 const laserOn = ref(false);
 let laserBeam = null;
+const LASER_BEAM_LENGTH = 24.4;
 const availableInstruments = ref([
  { id: 'laser', name: '氦氖激光器', icon: '🔴' },
  { id: 'collimator', name: '平行光管', icon: '🔭' },
@@ -128,6 +139,28 @@ const isMoving = ref(false);
 const instrumentScale = ref(1);
 const fixedInstruments = ref([]);
 let instrumentDragPlane = null;
+const OPTICAL_AXIS_Y = 2.75;
+const OPTICAL_AXIS_Z = 0;
+const opticalCenterOffsets = {
+ laser: { y: 1.4, z: 0 },
+ collimator: { y: 0, z: 0 },
+ cell: { y: 0, z: 0 },
+ telescope: { y: 0, z: 0 },
+ ccd: { y: 0.1, z: 0 }
+};
+const targetRotationsY = {
+ laser: 0,
+ collimator: Math.PI / 2,
+ cell: 0,
+ telescope: Math.PI / 2,
+ ccd: 0
+};
+const alignmentStatus = ref({
+ level: 'good',
+ text: '初始已接近等高共轴',
+ detail: '最大高度差 0.0，横向偏差 0.0',
+ tip: '只需微调旋转或对焦即可进入测量。'
+});
 const initScene = () => {
  if (!canvasContainerRef.value)
  return;
@@ -139,7 +172,11 @@ const initScene = () => {
  renderer = new THREE.WebGLRenderer({ antialias: true });
  renderer.setSize(canvasContainerRef.value.clientWidth, canvasContainerRef.value.clientHeight);
  renderer.setPixelRatio(window.devicePixelRatio);
- renderer.shadowMap.enabled = false;
+ renderer.shadowMap.enabled = true;
+ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+ renderer.outputColorSpace = THREE.SRGBColorSpace;
+ renderer.toneMapping = THREE.ACESFilmicToneMapping;
+ renderer.toneMappingExposure = 1.05;
  canvasContainerRef.value.appendChild(renderer.domElement);
  const canvas = renderer.domElement;
  canvas.style.position = 'absolute';
@@ -161,13 +198,16 @@ const initScene = () => {
  controls.panSpeed = 1.0;
  controls.keyPanSpeed = 0.1;
  controls.addEventListener('start', () => {
+ isOrbitInteracting = true;
  document.body.style.cursor = 'grabbing';
  });
  controls.addEventListener('end', () => {
+ isOrbitInteracting = false;
  document.body.style.cursor = 'default';
  });
  setupLights();
  setupTable();
+ setupOpticalRail();
  createInstruments();
  showOverlay.value = false;
  emit('scene-ready');
@@ -236,6 +276,30 @@ const setupTable = () => {
  floor.receiveShadow = true;
  scene.add(floor);
 };
+const setupOpticalRail = () => {
+ const railGroup = new THREE.Group();
+ const railMaterial = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.32, metalness: 0.85 });
+ const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.2 });
+ const railLength = 29;
+ [-0.48, 0.48].forEach(z => {
+ const rail = new THREE.Mesh(new THREE.BoxGeometry(railLength, 0.08, 0.08), railMaterial);
+ rail.position.set(-3, 0.32, z);
+ rail.castShadow = true;
+ rail.receiveShadow = true;
+ railGroup.add(rail);
+ });
+ const axisGuide = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, railLength, 16), highlightMaterial);
+ axisGuide.rotation.z = Math.PI / 2;
+ axisGuide.position.set(-3, OPTICAL_AXIS_Y, OPTICAL_AXIS_Z);
+ railGroup.add(axisGuide);
+ for (let i = -15; i <= 9; i += 4) {
+ const tick = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.55, 0.05), highlightMaterial);
+ tick.position.set(i, OPTICAL_AXIS_Y, OPTICAL_AXIS_Z);
+ railGroup.add(tick);
+ }
+ scene.add(railGroup);
+ instruments.axisGuide = railGroup;
+};
 const createLaser = () => {
  const laserGroup = new THREE.Group();
  const aluminumMaterial = new THREE.MeshStandardMaterial({ color: 0xC0C0C0, roughness: 0.3, metalness: 0.9 });
@@ -260,7 +324,7 @@ const createLaser = () => {
  metalness: 0.9
  });
  const lensCap = new THREE.Mesh(lensCapGeometry, lensCapMaterial);
- lensCap.position.y = 1.71;
+ lensCap.position.y = 1.4;
  lensCap.castShadow = true;
  laserGroup.add(lensCap);
  const standPostGeometry = new THREE.CylinderGeometry(0.2, 0.2, 2.0, 16);
@@ -308,28 +372,28 @@ const createLaser = () => {
 };
 const createLaserBeam = () => {
  const beamGroup = new THREE.Group();
- const beamLength = 32;
- const beamGeometry = new THREE.CylinderGeometry(0.008, 0.008, beamLength, 16);
+ const beamLength = LASER_BEAM_LENGTH;
+ const beamGeometry = new THREE.CylinderGeometry(0.022, 0.022, beamLength, 24);
  const beamMaterial = new THREE.MeshBasicMaterial({
  color: 0xff4444,
  transparent: true,
- opacity: laserOn.value ? 0.9 : 0
+ opacity: laserOn.value ? 0.95 : 0
  });
  const beam = new THREE.Mesh(beamGeometry, beamMaterial);
  beam.rotation.z = Math.PI / 2;
  beam.position.set(beamLength / 2, 0, 0);
  beamGroup.add(beam);
- const glowGeometry = new THREE.CylinderGeometry(0.02, 0.02, beamLength, 16);
+ const glowGeometry = new THREE.CylinderGeometry(0.085, 0.085, beamLength, 24);
  const glowMaterial = new THREE.MeshBasicMaterial({
  color: 0xff6b6b,
  transparent: true,
- opacity: laserOn.value ? 0.3 : 0
+ opacity: laserOn.value ? 0.38 : 0
  });
  const glow = new THREE.Mesh(glowGeometry, glowMaterial);
  glow.rotation.z = Math.PI / 2;
  glow.position.set(beamLength / 2, 0, 0);
  beamGroup.add(glow);
- beamGroup.position.set(0, 1.72, 0);
+ beamGroup.position.set(0, 1.4, 0);
  laserBeam = beamGroup;
  if (instruments.laser) {
  instruments.laser.add(laserBeam);
@@ -349,9 +413,12 @@ const toggleLaserState = () => {
  if (laserBeam) {
  laserBeam.children.forEach(child => {
  if (child.material) {
- child.material.opacity = laserOn.value ? (child === laserBeam.children[0] ? 0.9 : 0.3) : 0;
+ child.material.opacity = laserOn.value ? (child === laserBeam.children[0] ? 0.95 : 0.38) : 0;
  }
  });
+ }
+ if (instruments.axisGuide) {
+ instruments.axisGuide.visible = !laserOn.value;
  }
  if (laserOn.value) {
  ElMessage.success('激光已开启');
@@ -417,7 +484,8 @@ const createCollimator = () => {
  const foot4 = new THREE.Mesh(feetGeometry, aluminumMaterial);
  foot4.position.set(0.8, -2.75, -0.5);
  collimatorGroup.add(foot4);
- collimatorGroup.position.set(-11, 2.65, 0);
+ collimatorGroup.position.set(-11.5, OPTICAL_AXIS_Y, OPTICAL_AXIS_Z);
+ collimatorGroup.rotation.y = targetRotationsY.collimator;
  collimatorGroup.userData = {
  id: 'collimator',
  name: '平行光管',
@@ -533,7 +601,7 @@ const createCell = () => {
  const foot4 = new THREE.Mesh(feetGeometry, aluminumMaterial);
  foot4.position.set(0.9, -2.38, -0.6);
  cellGroup.add(foot4);
- cellGroup.position.set(-7, 2.3, 0);
+ cellGroup.position.set(-7.2, OPTICAL_AXIS_Y, OPTICAL_AXIS_Z);
  cellGroup.userData = {
  id: 'cell',
  name: '超声光栅池',
@@ -604,7 +672,8 @@ const createTelescope = () => {
  const foot4 = new THREE.Mesh(feetGeometry, aluminumMaterial);
  foot4.position.set(0.8, -2.75, -0.5);
  telescopeGroup.add(foot4);
- telescopeGroup.position.set(3, 2.65, 0);
+ telescopeGroup.position.set(2.6, OPTICAL_AXIS_Y, OPTICAL_AXIS_Z);
+ telescopeGroup.rotation.y = targetRotationsY.telescope;
  telescopeGroup.userData = {
  id: 'telescope',
  name: '测量望远镜',
@@ -794,7 +863,7 @@ const createCCD = () => {
  foot.castShadow = true;
  tripodGroup.add(foot);
  ccdGroup.add(tripodGroup);
- ccdGroup.position.set(9, 2.55, 0);
+ ccdGroup.position.set(8.8, OPTICAL_AXIS_Y - opticalCenterOffsets.ccd.y, OPTICAL_AXIS_Z);
  ccdGroup.userData = {
  id: 'ccd',
  name: 'CCD相机',
@@ -916,11 +985,12 @@ const createInstruments = () => {
  createCCD();
  createComputer();
  usedInstruments.value = ['laser', 'collimator', 'cell', 'generator', 'telescope', 'ccd', 'computer'];
- hideAllInstruments();
  updateCellGeneratorConnection();
+ alignOpticalAxis(false);
  if (instruments.connection) {
- instruments.connection.visible = false;
+ instruments.connection.visible = true;
  }
+ updateAlignmentStatus();
 };
 
 const createCellGeneratorConnection = (cellPos, generatorPos) => {
@@ -998,6 +1068,85 @@ const hideAllInstruments = () => {
  }
  }
 };
+const getOpticalCenter = (id) => {
+ const instrument = instruments[id];
+ const offset = opticalCenterOffsets[id];
+ if (!instrument || !offset || !instrument.visible) return null;
+ return {
+ id,
+ x: instrument.position.x,
+ y: instrument.position.y + offset.y * instrument.scale.y,
+ z: instrument.position.z + offset.z * instrument.scale.z,
+ rotationY: instrument.rotation.y
+ };
+};
+const angleDelta = (angle, target) => {
+ const twoPi = Math.PI * 2;
+ return Math.abs((((angle - target) + Math.PI) % twoPi + twoPi) % twoPi - Math.PI);
+};
+const updateAlignmentStatus = () => {
+ const centers = ['laser', 'collimator', 'cell', 'telescope', 'ccd'].map(getOpticalCenter).filter(Boolean);
+ if (centers.length < 3) {
+ alignmentStatus.value = {
+ level: 'warn',
+ text: '光路仪器未完全显示',
+ detail: '请至少显示激光、超声池和接收端。',
+ tip: '从仪器库点击仪器名称即可显示。'
+ };
+ return;
+ }
+ const yErrors = centers.map(center => Math.abs(center.y - OPTICAL_AXIS_Y));
+ const zErrors = centers.map(center => Math.abs(center.z - OPTICAL_AXIS_Z));
+ const rotationErrors = centers.map(center => angleDelta(center.rotationY, targetRotationsY[center.id] ?? 0));
+ const maxY = Math.max(...yErrors);
+ const maxZ = Math.max(...zErrors);
+ const maxRotation = Math.max(...rotationErrors);
+ const detail = `最大高度差 ${maxY.toFixed(2)}，横向偏差 ${maxZ.toFixed(2)}，旋转偏差 ${maxRotation.toFixed(2)} rad`;
+ if (maxY < 0.08 && maxZ < 0.08 && maxRotation < 0.08) {
+ alignmentStatus.value = {
+ level: 'good',
+ text: '已等高共轴',
+ detail,
+ tip: '可以直接开启激光并进入参数调节。'
+ };
+ } else if (maxY < 0.22 && maxZ < 0.22 && maxRotation < 0.18) {
+ alignmentStatus.value = {
+ level: 'near',
+ text: '接近等高共轴',
+ detail,
+ tip: '选中偏离仪器，用升高/降低或旋转做细微调整。'
+ };
+ } else {
+ alignmentStatus.value = {
+ level: 'warn',
+ text: '需要重新校准',
+ detail,
+ tip: '点击底部“共轴复位”，或逐个移动仪器回到红色参考轴。'
+ };
+ }
+};
+const alignOpticalAxis = (notify = true) => {
+ const placements = {
+ laser: { x: -15.5, y: OPTICAL_AXIS_Y - opticalCenterOffsets.laser.y, z: OPTICAL_AXIS_Z },
+ collimator: { x: -11.5, y: OPTICAL_AXIS_Y - opticalCenterOffsets.collimator.y, z: OPTICAL_AXIS_Z },
+ cell: { x: -7.2, y: OPTICAL_AXIS_Y - opticalCenterOffsets.cell.y, z: OPTICAL_AXIS_Z },
+ telescope: { x: 2.6, y: OPTICAL_AXIS_Y - opticalCenterOffsets.telescope.y, z: OPTICAL_AXIS_Z },
+ ccd: { x: 8.8, y: OPTICAL_AXIS_Y - opticalCenterOffsets.ccd.y, z: OPTICAL_AXIS_Z },
+ generator: { x: -4.7, y: 0.9, z: 2.2 },
+ computer: { x: 15, y: 0.7, z: 0 }
+ };
+ Object.entries(placements).forEach(([id, position]) => {
+ if (!instruments[id]) return;
+ instruments[id].position.set(position.x, position.y, position.z);
+ instruments[id].rotation.set(0, targetRotationsY[id] ?? 0, 0);
+ instruments[id].visible = true;
+ });
+ updateCellGeneratorConnection();
+ updateAlignmentStatus();
+ if (notify) {
+ ElMessage.success('光路已恢复到等高共轴初始状态');
+ }
+};
 
 const showInstrument = (instId) => {
  if (instruments[instId]) {
@@ -1011,6 +1160,7 @@ const showInstrument = (instId) => {
  if (instruments.connection) {
  instruments.connection.visible = instruments.cell?.visible && instruments.generator?.visible;
  }
+ updateAlignmentStatus();
  ElMessage.success(`已显示${instruments[instId].userData.name}`);
  }
 };
@@ -1055,6 +1205,7 @@ const onDrop = (e) => {
  };
  addInstrumentToScene(instId, droppedInstrumentPosition);
  usedInstruments.value.push(instId);
+ updateAlignmentStatus();
  }
  draggingInstrument.value = null;
 };
@@ -1091,6 +1242,7 @@ const addInstrumentToScene = (instId, position) => {
  break;
  }
  updateCellGeneratorConnection();
+ updateAlignmentStatus();
 };
 const createLaserAt = (pos) => {
  const laserGroup = new THREE.Group();
@@ -1145,28 +1297,28 @@ const createLaserAt = (pos) => {
 };
 const createLaserBeamAt = (pos) => {
  const beamGroup = new THREE.Group();
- const beamLength = 32;
- const beamGeometry = new THREE.CylinderGeometry(0.008, 0.008, beamLength, 16);
+ const beamLength = LASER_BEAM_LENGTH;
+ const beamGeometry = new THREE.CylinderGeometry(0.022, 0.022, beamLength, 24);
  const beamMaterial = new THREE.MeshBasicMaterial({
  color: 0xff4444,
  transparent: true,
- opacity: laserOn.value ? 0.9 : 0
+ opacity: laserOn.value ? 0.95 : 0
  });
  const beam = new THREE.Mesh(beamGeometry, beamMaterial);
  beam.rotation.z = Math.PI / 2;
  beam.position.set(beamLength / 2, 0, 0);
  beamGroup.add(beam);
- const glowGeometry = new THREE.CylinderGeometry(0.02, 0.02, beamLength, 16);
+ const glowGeometry = new THREE.CylinderGeometry(0.085, 0.085, beamLength, 24);
  const glowMaterial = new THREE.MeshBasicMaterial({
  color: 0xff6b6b,
  transparent: true,
- opacity: laserOn.value ? 0.3 : 0
+ opacity: laserOn.value ? 0.38 : 0
  });
  const glow = new THREE.Mesh(glowGeometry, glowMaterial);
  glow.rotation.z = Math.PI / 2;
  glow.position.set(beamLength / 2, 0, 0);
  beamGroup.add(glow);
- beamGroup.position.set(0, 1.72, 0);
+ beamGroup.position.set(0, 1.4, 0);
  laserBeam = beamGroup;
  if (instruments.laser) {
  instruments.laser.add(laserBeam);
@@ -1191,6 +1343,7 @@ const createCollimatorAt = (pos) => {
  base.position.y = -0.575;
  collimatorGroup.add(base);
  collimatorGroup.position.set(pos.x, pos.y, pos.z);
+ collimatorGroup.rotation.y = targetRotationsY.collimator;
  collimatorGroup.userData = {
  id: 'collimator',
  name: '平行光管',
@@ -1317,6 +1470,7 @@ const createTelescopeAt = (pos) => {
  base.position.y = -0.575;
  telescopeGroup.add(base);
  telescopeGroup.position.set(pos.x, pos.y, pos.z);
+ telescopeGroup.rotation.y = targetRotationsY.telescope;
  telescopeGroup.userData = {
  id: 'telescope',
  name: '测量望远镜',
@@ -1465,6 +1619,8 @@ const onMouseMove = (e) => {
  if (intersectPoint) {
  selectedInstrument3D.value.position.x = intersectPoint.x;
  selectedInstrument3D.value.position.z = intersectPoint.z;
+ updateCellGeneratorConnection();
+ updateAlignmentStatus();
  }
  return;
  }
@@ -1472,6 +1628,7 @@ const onMouseMove = (e) => {
  const deltaX = e.clientX - previousMousePosition.x;
  selectedInstrument3D.value.rotation.y += deltaX * 0.01;
  previousMousePosition = { x: e.clientX, y: e.clientY };
+ updateAlignmentStatus();
  return;
  }
  if (isScaling.value && selectedInstrument3D.value && !fixedInstruments.value.includes(selectedInstrument3D.value.userData.id)) {
@@ -1480,9 +1637,10 @@ const onMouseMove = (e) => {
  const newScale = Math.max(0.1, selectedInstrument3D.value.scale.x * scaleChange);
  selectedInstrument3D.value.scale.set(newScale, newScale, newScale);
  previousMousePosition = { x: e.clientX, y: e.clientY };
+ updateAlignmentStatus();
  return;
  }
- if (!controls.getState().isDragging) {
+ if (!isOrbitInteracting) {
  updateMousePosition(e);
  checkIntersection();
  }
@@ -1619,6 +1777,7 @@ const onWheel = (e) => {
  const currentScale = selectedInstrument3D.value.scale.x;
  const newScale = Math.max(0.1, currentScale + delta);
  selectedInstrument3D.value.scale.set(newScale, newScale, newScale);
+ updateAlignmentStatus();
  }
  else if (controls) {
  controls.enableZoom = true;
@@ -1668,6 +1827,20 @@ const toggleRotate = () => {
  ElMessage.info('已退出旋转模式');
  }
 };
+const adjustInstrumentHeight = (delta) => {
+ if (!selectedInstrument.value || !selectedInstrument3D.value) {
+ ElMessage.info('请先单击选择需要调高的仪器');
+ return;
+ }
+ if (fixedInstruments.value.includes(selectedInstrument3D.value.userData.id)) {
+ ElMessage.warning('仪器已固定，请先解除固定后再调高');
+ return;
+ }
+ selectedInstrument3D.value.position.y = Math.max(0.4, Math.min(4.2, selectedInstrument3D.value.position.y + delta));
+ updateCellGeneratorConnection();
+ updateAlignmentStatus();
+ ElMessage.info(delta > 0 ? '已升高选中仪器' : '已降低选中仪器');
+};
 const toggleScale = () => {
  isScaling.value = !isScaling.value;
  isMoving.value = false;
@@ -1702,6 +1875,8 @@ const removeInstrument = () => {
  fixedInstruments.value = fixedInstruments.value.filter(i => i !== id);
  selectedInstrument.value = null;
  selectedInstrument3D.value = null;
+ updateCellGeneratorConnection();
+ updateAlignmentStatus();
  ElMessage.info('仪器已移除');
 };
 const animate = () => {
@@ -1910,7 +2085,7 @@ defineExpose({
 .instrument-controls {
  padding: 12px 15px;
  display: grid;
- grid-template-columns: repeat(4, 1fr);
+ grid-template-columns: repeat(3, 1fr);
  gap: 8px;
  border-top: 1px solid #334155;
 }
@@ -1943,6 +2118,60 @@ defineExpose({
  opacity: 0.5;
  cursor: not-allowed;
  transform: none;
+}
+
+.alignment-hud {
+  position: absolute;
+  top: 20px;
+  left: 220px;
+  width: 300px;
+  z-index: 19;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #e2e8f0;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(10px);
+}
+
+.alignment-hud.good {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(6, 78, 59, 0.76);
+}
+
+.alignment-hud.near {
+  border-color: rgba(251, 191, 36, 0.58);
+  background: rgba(120, 53, 15, 0.76);
+}
+
+.alignment-hud.warn {
+  border-color: rgba(248, 113, 113, 0.62);
+  background: rgba(127, 29, 29, 0.78);
+}
+
+.alignment-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 4px;
+}
+
+.alignment-state {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.alignment-detail,
+.alignment-tip {
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(241, 245, 249, 0.84);
+}
+
+.alignment-tip {
+  margin-top: 4px;
 }
 
 .camera-controls {

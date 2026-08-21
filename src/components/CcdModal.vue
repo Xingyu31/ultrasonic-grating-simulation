@@ -55,6 +55,12 @@
 <script setup>
 import { ref, watch, onMounted, nextTick } from 'vue'
 import ZoomModal from './ZoomModal.vue'
+import {
+  computeFringePosition,
+  getSoundSpeed,
+  simulateMeasurement,
+  snapToResonantFrequency
+} from '../utils/physics.js'
 
 const props = defineProps({
   laserOn: {
@@ -122,57 +128,16 @@ const wavelengthToRgb = (wavelength) => {
   return { r: R, g: G, b: B }
 }
 
-const getSoundSpeed = (liquidTypeId, concentration, temperature = 20) => {
-  const liquidConfigs = {
-    'pure-water': {
-      temperatureFormula: (t) => 1398 + 3.46 * t
-    },
-    'nacl': { 
-      baseSpeed: 1482.3, 
-      speedFactor: 4.945
-    },
-    'ethylene-glycol': { baseSpeed: 1500, speedFactor: 10 },
-    'glycerol': { baseSpeed: 1480, speedFactor: 12 },
-    'sugar': { baseSpeed: 1480, speedFactor: 5.5 },
-    'alcohol': { baseSpeed: 1480, speedFactor: -2.5 },
-    'hcl': { baseSpeed: 1480, speedFactor: 8 },
-    'naoh': { baseSpeed: 1480, speedFactor: 7 }
-  }
-  const config = liquidConfigs[liquidTypeId] || liquidConfigs['nacl']
-  
-  if (config.temperatureFormula) {
-    return config.temperatureFormula(temperature)
-  }
-  
-  if (config.tableData) {
-    const tableData = config.tableData
-    if (concentration <= tableData[0].wt) return tableData[0].speed
-    if (concentration >= tableData[tableData.length - 1].wt) return tableData[tableData.length - 1].speed
-    
-    for (let i = 0; i < tableData.length - 1; i++) {
-      const current = tableData[i]
-      const next = tableData[i + 1]
-      if (concentration >= current.wt && concentration <= next.wt) {
-        const ratio = (concentration - current.wt) / (next.wt - current.wt)
-        return current.speed + ratio * (next.speed - current.speed)
-      }
-    }
-    return tableData[0].speed
-  }
-  
-  return config.baseSpeed + config.speedFactor * concentration
-}
-
-const ultrasonicWavelength = (frequency, concentration, temperature = 20) => {
-  const liquidTypeId = props.params.liquidTypeId || 'nacl'
-  const vs = getSoundSpeed(liquidTypeId, concentration, temperature)
-  return vs / (frequency * 1e6)
-}
-
 const fringePosition = (m, wavelength, frequency, concentration, distance) => {
   const temperature = props.params.temperature || 20
-  const ds = ultrasonicWavelength(frequency, concentration, temperature)
-  return m * wavelength * distance / ds
+  const soundSpeed = getSoundSpeed(props.params.liquidTypeId || 'nacl', concentration, temperature)
+  return computeFringePosition({
+    order: m,
+    wavelengthNm: wavelength * 1e9,
+    frequencyMhz: snapToResonantFrequency(frequency),
+    distanceM: distance,
+    soundSpeed
+  })
 }
 
 const drawDiffractionPattern = () => {
@@ -365,26 +330,23 @@ const handleFocus = () => {
   drawDiffractionPattern()
   
   if (isFocused.value) {
-    const baseVs = getSoundSpeed(props.params.liquidTypeId || 'nacl', props.params.concentration, props.params.temperature)
-    const speedError = (Math.random() - 0.5) * 3
-    const finalSpeed = baseVs + speedError
-    
-    const k = 1
-    const lambda = props.params.wavelength * 1e-9
-    const f = props.params.frequency * 1e6
-    const L = props.params.distance
-    const vs = finalSpeed
-    
-    const theoreticalSpacing = (2 * k * lambda * f * L) / vs
-    const spacingError = (Math.random() - 0.5) * 0.005 * theoreticalSpacing
-    const measuredSpacingMeters = theoreticalSpacing + spacingError
+    const measurement = simulateMeasurement({
+      wavelengthNm: props.params.wavelength,
+      frequencyMhz: props.params.frequency,
+      distanceM: props.params.distance,
+      liquidTypeId: props.params.liquidTypeId || 'nacl',
+      concentration: props.params.concentration,
+      temperature: props.params.temperature || 20
+    })
     
     emit('addRecord', {
       wavelength: props.params.wavelength,
-      frequency: props.params.frequency,
+      frequency: measurement.snappedFrequencyMhz,
       concentration: props.params.concentration,
-      spacing: measuredSpacingMeters * 1000,
-      speed: finalSpeed,
+      temperature: props.params.temperature || 20,
+      liquidTypeId: props.params.liquidTypeId || 'nacl',
+      spacing: measurement.spacingMm,
+      speed: measurement.speed,
       experimentMode: props.experimentMode
     })
     

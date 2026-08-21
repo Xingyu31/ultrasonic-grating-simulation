@@ -12,7 +12,7 @@
             <span v-if="currentView === 'simulation' && simulationMode === '2d'" class="mode-label">实物仪器实操仿真模式 (2D - 存档)</span>
             <span v-if="currentView === 'archiveMeasure'" class="mode-label">🔍 未知浓度测量模式</span>
           </div>
-          <span class="version-badge">V3.0</span>
+          <span class="version-badge">V4.1</span>
         </div>
         <div class="title-right">
           <button class="nav-btn" :class="{ active: currentView === 'measurement' }"

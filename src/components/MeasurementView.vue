@@ -25,13 +25,13 @@
           <button class="btn-run" @click="runSimulation">▶ 运行仿真</button>
         </div>
         <div class="params-tabs">
-          <button class="param-tab" :class="{ active: paramTab === 'liquid' }" @click="paramTab = 'liquid'">
+          <button class="param-tab" :class="{ active: paramTab === 'liquid' }" @click="selectParamTab('liquid', 'concentration')">
             💧 液体参数
           </button>
-          <button class="param-tab" :class="{ active: paramTab === 'optical' }" @click="paramTab = 'optical'">
+          <button class="param-tab" :class="{ active: paramTab === 'optical' }" @click="selectParamTab('optical', 'wavelength')">
             🌈 光学参数
           </button>
-          <button class="param-tab" :class="{ active: paramTab === 'acoustic' }" @click="paramTab = 'acoustic'">
+          <button class="param-tab" :class="{ active: paramTab === 'acoustic' }" @click="selectParamTab('acoustic', 'frequency')">
             🔊 声学参数
           </button>
         </div>
@@ -49,14 +49,16 @@
               <el-slider v-model="localParams.concentration" :min="0" :max="26.47" :step="0.0001" 
                          show-input :input-size="'small'" :disabled="isPureWater" />
               <span class="param-unit">wt%</span>
+              <div class="param-explain">浓度升高时盐溶液声速增大，按 D = 2kλfL/v，衍射条纹间距会相应减小。</div>
             </div>
             <div class="param-item">
               <label class="param-label">温度
                 <button v-if="isPureWater" class="btn-temp-fit" @click="showTempFitModal = true">🌡️ 温度拟合</button>
               </label>
-              <el-slider v-model="localParams.temperature" :min="0" :max="80" :step="0.1"
+              <el-slider v-model="localParams.temperature" :min="WATER_TEMPERATURE_RANGE.min" :max="WATER_TEMPERATURE_RANGE.max" :step="0.1"
                          show-input :input-size="'small'" :disabled="!isPureWater" />
               <span class="param-unit">°C</span>
+              <div class="param-explain">纯水模式采用 0-80°C 非线性声速模型，高温段声速变化趋缓；盐溶液保持 20°C 常温近似。</div>
             </div>
           </template>
           <template v-else-if="paramTab === 'optical'">
@@ -65,47 +67,61 @@
               <el-slider v-model="localParams.wavelength" :min="380" :max="700" :step="0.1" 
                          show-input :input-size="'small'" />
               <span class="param-unit">nm</span>
+              <div class="param-explain">入射波长越长，±1级衍射位置离中心越远，条纹间距近似线性增大。</div>
             </div>
             <div class="param-item">
               <label class="param-label">狭缝宽度</label>
               <el-slider v-model="localParams.gratingWidth" :min="0.0001" :max="0.0005" :step="0.00001" 
                          show-input :input-size="'small'" />
               <span class="param-unit">m</span>
+              <div class="param-explain">有效狭缝宽度越大，单缝包络越窄，高级次条纹更容易被压低；宽度越小，包络展开更宽。</div>
             </div>
           </template>
           <template v-else-if="paramTab === 'acoustic'">
             <div class="param-item">
-              <label class="param-label">超声频率</label>
-              <el-slider v-model="localParams.frequency" :min="4" :max="15" :step="0.1" 
+              <label class="param-label">探头谐振频率</label>
+              <el-slider v-model="localParams.frequency" :min="4" :max="15" :step="0.1"
                          show-input :input-size="'small'" />
               <span class="param-unit">MHz</span>
+              <div class="param-explain">频率可在 4.0-15.0 MHz 范围内连续调节，改变频率会实时更新超声波长与衍射条纹间距。</div>
             </div>
             <div class="param-item">
               <label class="param-label">超声振幅</label>
               <el-slider v-model="localParams.amplitude" :min="0" :max="100" :step="1" 
                          show-input :input-size="'small'" />
               <span class="param-unit">%</span>
+              <div class="param-explain">振幅提高会加深声光相位调制，±1级与高级次条纹更亮；振幅过低时衍射图样对比度下降。</div>
             </div>
           </template>
+        </div>
+        <div class="physics-notes">
+          <div class="physics-note">
+            <div class="note-title">驻波场逻辑</div>
+            <p>固定腔长条件下，软件保持换能器边界和节点位置约束，改变波长、浓度或温度只更新声速与条纹间距，不额外改变驻波空间形态。</p>
+          </div>
+          <div class="physics-note">
+            <div class="note-title">算法简要说明</div>
+            <p v-for="item in ACOUSTIC_ALGORITHM_SUMMARY" :key="item">{{ item }}</p>
+          </div>
         </div>
         <div class="section-footer">
           <button class="btn-reset" @click="resetParams">重置参数</button>
         </div>
       </div>
       
-      <div class="panel-section fit-section">
+      <div ref="fitSection" class="panel-section fit-section">
         <div class="section-header">
           <span class="section-title">数据拟合分析</span>
           <button class="btn-fit" @click="performFit">执行拟合</button>
         </div>
         <div class="fit-tabs">
-          <button class="fit-tab" :class="{ active: fitTab === 'concentration' }" @click="fitTab = 'concentration'">
+          <button class="fit-tab" :class="{ active: fitTab === 'concentration' }" @click="selectFitTab('concentration')">
             📊 液体浓度影响
           </button>
-          <button class="fit-tab" :class="{ active: fitTab === 'wavelength' }" @click="fitTab = 'wavelength'">
+          <button class="fit-tab" :class="{ active: fitTab === 'wavelength' }" @click="selectFitTab('wavelength')">
             🌈 光波长影响
           </button>
-          <button class="fit-tab" :class="{ active: fitTab === 'frequency' }" @click="fitTab = 'frequency'">
+          <button class="fit-tab" :class="{ active: fitTab === 'frequency' }" @click="selectFitTab('frequency')">
             📡 超声频率影响
           </button>
         </div>
@@ -616,6 +632,15 @@ import ZoomModal from './ZoomModal.vue'
 import TemperatureFitModal from './TemperatureFitModal.vue'
 import { saveArchive } from '../utils/archive.js'
 import { ElMessage } from 'element-plus'
+import {
+  ACOUSTIC_ALGORITHM_SUMMARY,
+  WATER_TEMPERATURE_RANGE,
+  computeDiffractionIntensity,
+  computeFringePosition,
+  getSoundSpeed,
+  liquidConfigs,
+  simulateMeasurement
+} from '../utils/physics.js'
 
 const props = defineProps({
   params: Object,
@@ -635,6 +660,7 @@ const focusComplete = ref(true)
 const mainCanvas = ref(null)
 const intensityCanvas = ref(null)
 const fitCanvas = ref(null)
+const fitSection = ref(null)
 
 const plus1Position = ref('')
 const minus1Position = ref('')
@@ -657,6 +683,18 @@ const paramTab = ref('liquid')
 const recordTab = ref('all')
 const analysisTab = ref('wavelength')
 
+const selectFitTab = (mode) => {
+  fitTab.value = mode
+  nextTick(() => {
+    fitSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
+}
+
+const selectParamTab = (tab, mode) => {
+  paramTab.value = tab
+  selectFitTab(mode)
+}
+
 const currentModeInfo = computed(() => {
   switch (fitTab.value) {
     case 'wavelength':
@@ -668,7 +706,7 @@ const currentModeInfo = computed(() => {
       }
     case 'frequency':
       return {
-        variable: `超声频率 f (${props.params.frequency.toFixed(1)} MHz)`,
+        variable: `探头谐振频率 f (${props.params.frequency.toFixed(1)} MHz)`,
         fixed: `波长=${props.params.wavelength.toFixed(1)}nm, 浓度=${props.params.concentration.toFixed(4)}wt%`,
         formula: '声速 v = 2kλfL / D（f变化，v恒定）',
         mode: 'frequency'
@@ -823,8 +861,8 @@ const isPureWater = computed(() => localParams.liquidTypeId === 'pure-water')
 const onLiquidTypeChange = () => {
   if (isPureWater.value) {
     localParams.concentration = 0
-    if (localParams.temperature < 0 || localParams.temperature > 80) {
-      localParams.temperature = 21
+    if (localParams.temperature < WATER_TEMPERATURE_RANGE.min || localParams.temperature > WATER_TEMPERATURE_RANGE.max) {
+      localParams.temperature = 20
     }
   } else {
     localParams.temperature = 20
@@ -832,6 +870,13 @@ const onLiquidTypeChange = () => {
   experimentVs.value = null
   emit('update:params', { ...localParams })
   runSimulation()
+}
+
+const setMeasuredCursorPositions = (plusMm, minusMm) => {
+  plus1Position.value = plusMm.toFixed(4)
+  minus1Position.value = minusMm.toFixed(4)
+  cursors.value[0].x = Number(plus1Position.value)
+  cursors.value[1].x = Number(minus1Position.value)
 }
 
 const cursors = ref([{ m: 1, x: null }, { m: -1, x: null }])
@@ -951,125 +996,42 @@ const wavelengthToRgb = (wavelength) => {
   return { r: R, g: G, b: B }
 }
 
-const liquidConfigs = {
-  'pure-water': {
-    baseSpeed: 1480,
-    speedFactor: 0,
-    tableData: null,
-    temperatureFormula: (t) => 1398 + 3.46 * t,
-    minTemperature: 0,
-    maxTemperature: 80
-  },
-  'nacl': {
-    baseSpeed: 1482.3,
-    speedFactor: 4.945,
-    tableData: null,
-    temperatureFormula: null
-  },
-  'ethylene-glycol': {
-    baseSpeed: 1500,
-    speedFactor: 10,
-    tableData: null
-  },
-  'glycerol': {
-    baseSpeed: 1480,
-    speedFactor: 12,
-    tableData: null
-  },
-  'sugar': {
-    baseSpeed: 1480,
-    speedFactor: 5.5,
-    tableData: null
-  },
-  'alcohol': {
-    baseSpeed: 1480,
-    speedFactor: -2.5,
-    tableData: null
-  },
-  'hcl': {
-    baseSpeed: 1480,
-    speedFactor: 8,
-    tableData: null
-  },
-  'naoh': {
-    baseSpeed: 1480,
-    speedFactor: 7,
-    tableData: null
-  }
-}
-
-const getSoundSpeed = (liquidTypeId, concentration, temperature = 20) => {
-  const config = liquidConfigs[liquidTypeId] || liquidConfigs['nacl']
-  
-  if (config.temperatureFormula) {
-    return config.temperatureFormula(temperature)
-  }
-  
-  if (config.tableData) {
-    const tableData = config.tableData
-    if (concentration <= tableData[0].wt) return tableData[0].speed
-    if (concentration >= tableData[tableData.length - 1].wt) return tableData[tableData.length - 1].speed
-    
-    for (let i = 0; i < tableData.length - 1; i++) {
-      const current = tableData[i]
-      const next = tableData[i + 1]
-      if (concentration >= current.wt && concentration <= next.wt) {
-        const ratio = (concentration - current.wt) / (next.wt - current.wt)
-        return current.speed + ratio * (next.speed - current.speed)
-      }
-    }
-    return tableData[0].speed
-  }
-  
-  return config.baseSpeed + concentration * config.speedFactor
-}
-
-const ultrasonicWavelength = (frequency, concentration, vs = null) => {
-  if (vs === null) {
-    const baseVs = getSoundSpeed(localParams.liquidTypeId || 'nacl', concentration, localParams.temperature)
-    const randomVariation = (Math.random() - 0.5) * 5
-    vs = baseVs + randomVariation
-  }
-  return vs / (frequency * 1e6)
-}
-
 const fringePosition = (m, wavelength, frequency, concentration, distance) => {
-  const ds = ultrasonicWavelength(frequency, concentration, experimentVs.value)
-  return m * wavelength * distance / ds
+  const soundSpeed = experimentVs.value ?? getSoundSpeed(localParams.liquidTypeId || 'nacl', concentration, localParams.temperature)
+  return computeFringePosition({
+    order: m,
+    wavelengthNm: wavelength * 1e9,
+    frequencyMhz: frequency,
+    distanceM: distance,
+    soundSpeed
+  })
 }
 
 const intensityDistribution = (x, wavelength, frequency, concentration, distance, gratingWidth) => {
-  const ds = ultrasonicWavelength(frequency, concentration, experimentVs.value)
-  const k = 2 * Math.PI / wavelength
-  const characteristicScale = gratingWidth / 5
-  const u = k * characteristicScale * x / (2 * distance)
-  const beta = k * ds / 2
-  
-  const envelope = Math.pow(Math.sin(u) / (u || 1), 2)
-  const interference = Math.pow(Math.cos(beta * x / distance), 2)
-  
-  return envelope * interference
+  const soundSpeed = experimentVs.value ?? getSoundSpeed(localParams.liquidTypeId || 'nacl', concentration, localParams.temperature)
+  return computeDiffractionIntensity({
+    x,
+    wavelengthNm: wavelength * 1e9,
+    frequencyMhz: frequency,
+    distanceM: distance,
+    gratingWidthM: gratingWidth,
+    soundSpeed,
+    amplitude: localParams.amplitude
+  })
 }
 
 const runSimulation = () => {
   focusComplete.value = true
-  
-  const baseVs = getSoundSpeed(localParams.liquidTypeId || 'nacl', localParams.concentration, localParams.temperature)
-  const randomVariation = (Math.random() - 0.5) * 2
-  experimentVs.value = baseVs + randomVariation
-  
-  const k = 1
-  const lambda = localParams.wavelength * 1e-9
-  const f = localParams.frequency * 1e6
-  const L = localParams.distance
-  const vs = experimentVs.value
-  
-  const theoreticalSpacing = (2 * k * lambda * f * L) / vs
-  
-  const spacingError = (Math.random() - 0.5) * 0.005 * theoreticalSpacing
-  const measuredSpacingMeters = theoreticalSpacing + spacingError
-  
-  spacing.value = measuredSpacingMeters * 1000
+  const measurement = simulateMeasurement({
+    wavelengthNm: localParams.wavelength,
+    frequencyMhz: localParams.frequency,
+    distanceM: localParams.distance,
+    liquidTypeId: localParams.liquidTypeId || 'nacl',
+    concentration: localParams.concentration,
+    temperature: localParams.temperature
+  })
+  experimentVs.value = measurement.speed
+  setMeasuredCursorPositions(measurement.plus1Mm, measurement.minus1Mm)
   
   nextTick(() => {
     drawDiffractionPattern()
@@ -1084,7 +1046,8 @@ const resetParams = () => {
     frequency: 8.0,
     amplitude: 50,
     distance: 0.3,
-    gratingWidth: 0.0003
+    gratingWidth: 0.0003,
+    temperature: isPureWater.value ? 20 : 20
   })
   emit('update:params', { ...localParams })
 }
@@ -1655,8 +1618,8 @@ const drawFitChart = () => {
   ctx.fillText(`数据点数: ${n}`, 60, 59)
   
   if (fitTab.value === 'concentration') {
-    const avgSpeed = avgY
     const speeds = points.map(p => p.y)
+    const avgSpeed = speeds.reduce((acc, value) => acc + value, 0) / speeds.length
     const minSpeed = Math.min(...speeds)
     const maxSpeed = Math.max(...speeds)
     const stdDev = Math.sqrt(speeds.reduce((acc, v) => acc + Math.pow(v - avgSpeed, 2), 0) / points.length)
@@ -1791,7 +1754,7 @@ const performAnalysis = () => {
     }
     
     const liquidType = props.params.liquidTypeId || 'nacl'
-    const config = liquidConfigs[liquidType]
+    const config = liquidConfigs[liquidType] || liquidConfigs.nacl
     
     let theoreticalSlope, theoreticalIntercept
     
@@ -1860,7 +1823,7 @@ const performAnalysis = () => {
       modeRaw: mode,
       analysisType: 'linearFit',
       experimentalSpeed: avgSpeed,
-      theoreticalSpeed: theoreticalIntercept + slope * props.params.concentration,
+      theoreticalSpeed: theoreticalIntercept + theoreticalSlope * props.params.concentration,
       relativeError: avgRelativeError,
       dataPoints: records.length,
       stdDev,
@@ -1921,8 +1884,7 @@ const calculateSpacing = () => {
   const plus1 = parseFloat(plus1Position.value)
   const minus1 = parseFloat(minus1Position.value)
   
-  const spacingValue = Math.abs(plus1 - minus1)
-  spacing.value = parseFloat(spacingValue.toFixed(4))
+  setMeasuredCursorPositions(plus1, minus1)
   
   showNotification('间距计算完成', 'success')
 }
@@ -2519,8 +2481,8 @@ const drawFitChartZoom = (ctx, width, height) => {
   ctx.fillText(`数据点数: ${n}`, 70, 71)
   
   if (fitTab.value === 'concentration') {
-    const avgSpeed = avgY
     const speeds = points.map(p => p.y)
+    const avgSpeed = speeds.reduce((acc, value) => acc + value, 0) / speeds.length
     const minSpeed = Math.min(...speeds)
     const maxSpeed = Math.max(...speeds)
     const stdDev = Math.sqrt(speeds.reduce((acc, v) => acc + Math.pow(v - avgSpeed, 2), 0) / points.length)
@@ -2739,9 +2701,8 @@ const saveRecord = () => {
   const measuredSpacing = spacing.value + error
 
   const baseVs = getSoundSpeed(localParams.liquidTypeId || 'nacl', localParams.concentration, localParams.temperature)
-
-  const speedError = (Math.random() - 0.5) * 3
-  let finalSpeed = baseVs + speedError
+  const calculatedSpeed = (2 * localParams.wavelength * 1e-9 * localParams.distance * localParams.frequency * 1e6) / (measuredSpacing * 1e-3)
+  let finalSpeed = calculatedSpeed
 
   if (finalSpeed <= 0 || isNaN(finalSpeed)) {
     finalSpeed = baseVs
@@ -2985,7 +2946,9 @@ onUnmounted(() => {})
 
 .params-section {
   flex: 1;
-  min-height: 400px;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .params-tabs {
@@ -3069,6 +3032,84 @@ onUnmounted(() => {})
   font-size: 11px;
   color: #6b7280;
   margin-top: 2px;
+}
+
+.param-explain {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #64748b;
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.param-explain.important {
+  color: #92400e;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.resonance-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.resonance-btn {
+  min-height: 32px;
+  padding: 6px 4px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resonance-btn:hover {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.resonance-btn.active {
+  color: #ffffff;
+  border-color: #1d4ed8;
+  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.22);
+}
+
+.physics-notes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 0 15px 12px;
+}
+
+.physics-note {
+  padding: 10px 12px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+}
+
+.note-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #1e40af;
+  margin-bottom: 5px;
+}
+
+.physics-note p {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #475569;
 }
 
 .fixed-param-value {

@@ -46,7 +46,7 @@
           </div>
           <div class="temperature-info">
             <span class="info-icon">💡</span>
-            <span>声速公式: v = 1398 + 3.46 × t</span>
+            <span>声速模型: 0-80°C 纯水非线性多项式</span>
             <span>当前温度下声速: {{ soundSpeed.toFixed(1) }} m/s</span>
           </div>
         </div>
@@ -86,6 +86,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { WATER_TEMPERATURE_RANGE, getSoundSpeed, waterSoundSpeed } from '../utils/physics.js'
 
 const props = defineProps({
   concentration: Number,
@@ -113,12 +114,12 @@ const liquidTypes = [
     presetConcentrations: [],
     baseSpeed: 1480,
     speedFactor: 0,
-    description: '纯水，声速随温度变化（v = 1398 + 3.46t）',
+    description: '纯水，声速随温度非线性变化（0-80°C）',
     useTableData: false,
     useTemperature: true,
-    minTemperature: 0,
-    maxTemperature: 80,
-    temperatureFormula: (t) => 1398 + 3.46 * t
+    minTemperature: WATER_TEMPERATURE_RANGE.min,
+    maxTemperature: WATER_TEMPERATURE_RANGE.max,
+    temperatureFormula: waterSoundSpeed
   },
   {
     id: 'nacl',
@@ -158,14 +159,7 @@ const interpolateSpeed = (tableData, concentration) => {
 }
 
 const soundSpeed = computed(() => {
-  const liquid = selectedLiquid.value
-  if (liquid.temperatureFormula) {
-    return liquid.temperatureFormula(localTemperature.value)
-  }
-  if (liquid.useTableData && liquid.tableData) {
-    return interpolateSpeed(liquid.tableData, localConcentration.value)
-  }
-  return liquid.baseSpeed + localConcentration.value * liquid.speedFactor
+  return getSoundSpeed(selectedLiquid.value.id, localConcentration.value, localTemperature.value)
 })
 
 watch(() => props.concentration, (val) => {

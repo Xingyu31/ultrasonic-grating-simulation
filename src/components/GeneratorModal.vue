@@ -9,17 +9,18 @@
       
       <div class="modal-body">
         <div class="control-section">
-          <div class="section-label">频率调节</div>
+          <div class="section-label">探头谐振频率</div>
           <div class="slider-container">
-            <span class="slider-label">频率: {{ frequency.toFixed(1) }} MHz</span>
-            <el-slider v-model="localFrequency" :min="4" :max="15" :step="0.1" 
-                       show-input :input-size="'small'" />
-          </div>
-          <div class="preset-buttons">
-            <button v-for="f in presetFrequencies" :key="f"
-                    class="preset-btn" @click="setFrequency(f)">
-              {{ f.toFixed(1) }} MHz
-            </button>
+            <span class="slider-label">当前档位: {{ localFrequency.toFixed(1) }} MHz</span>
+            <div class="resonance-grid">
+              <button v-for="f in presetFrequencies" :key="f"
+                      class="resonance-btn"
+                      :class="{ active: Math.abs(localFrequency - f) < 0.001 }"
+                      @click="setFrequency(f)">
+                {{ f.toFixed(1) }} MHz
+              </button>
+            </div>
+            <div class="frequency-note">探头谐振频率为离散固有档位，频率影响实验应在这些档位之间切换。</div>
           </div>
         </div>
         
@@ -42,16 +43,16 @@
           <div class="display-panel">
             <div class="display-row">
               <span class="display-label">频率</span>
-              <span class="display-value frequency">{{ frequency.toFixed(1) }}</span>
+              <span class="display-value frequency">{{ localFrequency.toFixed(1) }}</span>
               <span class="display-unit">MHz</span>
             </div>
             <div class="display-row">
               <span class="display-label">振幅</span>
-              <span class="display-value amplitude">{{ amplitude }}</span>
+              <span class="display-value amplitude">{{ localAmplitude }}</span>
               <span class="display-unit">%</span>
             </div>
           </div>
-          <div class="power-indicator" :class="{ active: amplitude > 0 }">
+          <div class="power-indicator" :class="{ active: localAmplitude > 0 }">
             <div class="power-led"></div>
             <span>POWER</span>
           </div>
@@ -71,6 +72,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
+import { RESONANT_FREQUENCIES_MHZ, snapToResonantFrequency } from '../utils/physics.js'
 
 const props = defineProps({
   frequency: Number,
@@ -80,14 +82,14 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'updateFrequency', 'updateAmplitude', 'completeStep'])
 
-const localFrequency = ref(props.frequency)
+const localFrequency = ref(snapToResonantFrequency(props.frequency))
 const localAmplitude = ref(props.amplitude)
 
-const presetFrequencies = [6, 7, 8, 9, 10]
+const presetFrequencies = RESONANT_FREQUENCIES_MHZ
 const presetAmplitudes = [30, 50, 70, 90]
 
 watch(() => props.frequency, (val) => {
-  localFrequency.value = val
+  localFrequency.value = snapToResonantFrequency(val)
 })
 
 watch(() => props.amplitude, (val) => {
@@ -95,7 +97,7 @@ watch(() => props.amplitude, (val) => {
 })
 
 const setFrequency = (f) => {
-  localFrequency.value = f
+  localFrequency.value = snapToResonantFrequency(f)
 }
 
 const setAmplitude = (a) => {
@@ -103,7 +105,7 @@ const setAmplitude = (a) => {
 }
 
 const applyChanges = () => {
-  emit('updateFrequency', localFrequency.value)
+  emit('updateFrequency', snapToResonantFrequency(localFrequency.value))
   emit('updateAmplitude', localAmplitude.value)
 }
 
@@ -198,6 +200,49 @@ const completeStep = () => {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.resonance-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.resonance-btn {
+  min-height: 34px;
+  padding: 7px 5px;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid #475569;
+  border-radius: 6px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resonance-btn:hover {
+  border-color: #22c55e;
+  color: #dcfce7;
+  background: rgba(21, 128, 61, 0.25);
+}
+
+.resonance-btn.active {
+  color: #052e16;
+  border-color: #86efac;
+  background: linear-gradient(135deg, #86efac 0%, #22c55e 100%);
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.28);
+}
+
+.frequency-note {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 6px;
+  background: rgba(120, 53, 15, 0.22);
+  color: #fde68a;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .preset-btn {

@@ -73,7 +73,7 @@
             </div>
             <div class="guide-step">
               <span class="step-icon">3️⃣</span>
-              <span class="step-text">双击信号发生器，设置超声频率和振幅</span>
+              <span class="step-text">双击信号发生器，选择探头谐振频率档位并设置振幅</span>
             </div>
             <div class="guide-step">
               <span class="step-icon">4️⃣</span>
@@ -88,7 +88,8 @@
             <li>滚轮缩放视图</li>
             <li>单击仪器可查看详细信息</li>
             <li>双击仪器可打开参数调节面板</li>
-            <li>选中仪器后可移动、旋转、缩放</li>
+            <li>初始光路已接近等高共轴，只需做细微移动或旋转校准</li>
+            <li>选中仪器后可移动、旋转、滚轮缩放；右上角会提示当前共轴状态</li>
           </ul>
         </div>
       </div>
@@ -181,7 +182,7 @@ const showCcdModal = ref(false)
 const progressSteps = [
   { text: '开启光源', completed: false },
   { text: '调节浓度', completed: false },
-  { text: '调节频率', completed: false },
+  { text: '选谐振频率', completed: false },
   { text: '对焦测量', completed: false }
 ]
 
@@ -193,7 +194,7 @@ const currentModeInfo = computed(() => {
     case 'wavelength':
       return { variable: '入射光波长', fixed: '超声频率8.0MHz, 浓度7.74wt%' }
     case 'frequency':
-      return { variable: '超声频率', fixed: '波长600.79nm, 浓度7.74wt%' }
+      return { variable: '探头谐振频率档位', fixed: '波长600.79nm, 浓度7.74wt%' }
     case 'concentration':
       return { variable: '液体浓度', fixed: '波长600.79nm, 频率8.0MHz' }
     default:
@@ -294,6 +295,11 @@ const handleToggleLaser = () => {
 }
 
 const openTelescope = () => {
+  if (currentStep.value >= 4) {
+    showTelescopeModal.value = true
+  } else {
+    alert('请先完成上一步：调节频率')
+  }
 }
 
 const openCell = () => {
