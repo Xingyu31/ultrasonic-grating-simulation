@@ -995,11 +995,16 @@ const createInstruments = () => {
  createTelescope();
  createCCD();
  createComputer();
- usedInstruments.value = ['laser', 'collimator', 'cell', 'generator', 'telescope', 'ccd', 'computer'];
+ usedInstruments.value = [];
+ Object.values(instruments).forEach(inst => {
+ if (inst && inst.visible !== undefined) {
+ inst.visible = false;
+ }
+ });
  updateCellGeneratorConnection();
  alignOpticalAxis(false);
  if (instruments.connection) {
- instruments.connection.visible = true;
+ instruments.connection.visible = false;
  }
  updateAlignmentStatus();
 };
@@ -1163,11 +1168,20 @@ const alignOpticalAxis = (notify = true) => {
 const showInstrument = (instId) => {
  if (instruments[instId]) {
  instruments[instId].visible = true;
+ if (!usedInstruments.value.includes(instId)) {
+ usedInstruments.value.push(instId);
+ }
  if (instId === 'cell' && instruments.generator) {
  instruments.generator.visible = true;
+ if (!usedInstruments.value.includes('generator')) {
+ usedInstruments.value.push('generator');
+ }
  }
  if (instId === 'generator' && instruments.cell) {
  instruments.cell.visible = true;
+ if (!usedInstruments.value.includes('cell')) {
+ usedInstruments.value.push('cell');
+ }
  }
  if (instruments.connection) {
  instruments.connection.visible = instruments.cell?.visible && instruments.generator?.visible;
