@@ -406,12 +406,7 @@ const createLaserBeam = () => {
  beamGroup.add(glow);
  beamGroup.position.set(0, 1.4, 0);
  laserBeam = beamGroup;
- if (instruments.laser) {
- instruments.laser.add(laserBeam);
- }
- else {
  scene.add(laserBeam);
- }
 };
 const toggleLaserState = () => {
  laserOn.value = !laserOn.value;
@@ -999,12 +994,15 @@ const createInstruments = () => {
  updateCellGeneratorConnection();
  alignOpticalAxis(false);
  Object.values(instruments).forEach(inst => {
- if (inst && inst.visible !== undefined) {
+ if (inst && inst.visible !== undefined && inst !== instruments.axisGuide) {
  inst.visible = false;
  }
  });
  if (instruments.connection) {
  instruments.connection.visible = false;
+ }
+ if (instruments.axisGuide) {
+ instruments.axisGuide.visible = true;
  }
  updateAlignmentStatus();
 };
@@ -1344,14 +1342,9 @@ const createLaserBeamAt = (pos) => {
  glow.rotation.z = Math.PI / 2;
  glow.position.set(beamLength / 2, 0, 0);
  beamGroup.add(glow);
- beamGroup.position.set(0, 1.4, 0);
+ beamGroup.position.set(pos.x, pos.y + 1.4, pos.z);
  laserBeam = beamGroup;
- if (instruments.laser) {
- instruments.laser.add(laserBeam);
- }
- else {
  scene.add(laserBeam);
- }
 };
 const createCollimatorAt = (pos) => {
  const collimatorGroup = new THREE.Group();
