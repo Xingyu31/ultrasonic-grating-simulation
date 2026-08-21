@@ -448,7 +448,7 @@
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">标准差</span>
-                    <span class="stat-value">{{ filteredAnalysisResult.stdDev.toFixed(1) }}%</span>
+                    <span class="stat-value">{{ filteredAnalysisResult.stdDev.toFixed(1) }} m/s</span>
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">变异系数</span>
@@ -482,11 +482,11 @@
                 <div v-if="filteredAnalysisResult.analysisType === 'constantSpeed'" class="fit-params">
                   <div class="fit-param-item">
                     <span class="fit-param-label">验证指标</span>
-                    <span class="fit-param-value">声速恒定（标准差 < 0.5%）</span>
+                    <span class="fit-param-value">声速恒定（标准差 < 6 m/s）</span>
                   </div>
                   <div class="fit-param-item">
                     <span class="fit-param-label">当前标准差</span>
-                    <span class="fit-param-value" :class="{ 'good': filteredAnalysisResult.stdDev < 0.5, 'bad': filteredAnalysisResult.stdDev >= 0.5 }">{{ filteredAnalysisResult.stdDev.toFixed(1) }}%</span>
+                    <span class="fit-param-value" :class="{ 'good': filteredAnalysisResult.stdDev < 6, 'bad': filteredAnalysisResult.stdDev >= 6 }">{{ filteredAnalysisResult.stdDev.toFixed(1) }} m/s</span>
                   </div>
                   <div class="fit-formula">
                     理论公式: v = 2kλfL / D（波长/频率变化，v恒定）
@@ -1623,10 +1623,10 @@ const drawFitChart = () => {
     const minSpeed = Math.min(...speeds)
     const maxSpeed = Math.max(...speeds)
     const absStdDev = Math.sqrt(speeds.reduce((acc, v) => acc + Math.pow(v - avgSpeed, 2), 0) / points.length)
-    const stdDev = (absStdDev / avgSpeed) * 100
+    const stdDev = absStdDev
     ctx.fillText(`平均声速: ${avgSpeed.toFixed(2)} m/s`, 60, 76)
     ctx.fillText(`声速范围: ${minSpeed.toFixed(1)} ~ ${maxSpeed.toFixed(1)} m/s`, 60, 93)
-    ctx.fillText(`标准差: ±${stdDev.toFixed(1)}%`, 60, 110)
+    ctx.fillText(`标准差: ${stdDev.toFixed(1)} m/s`, 60, 110)
   }
   
   if (stats) {
@@ -1669,8 +1669,8 @@ const performAnalysis = () => {
     
     const variance = speeds.reduce((acc, v) => acc + Math.pow(v - experimentalSpeed, 2), 0) / speeds.length
     const absStdDev = Math.sqrt(variance)
-    const stdDev = (absStdDev / experimentalSpeed) * 100
-    const cv = stdDev
+    const stdDev = absStdDev
+    const cv = (absStdDev / experimentalSpeed) * 100
     
     const sortedSpeeds = [...speeds].sort((a, b) => a - b)
     const median = sortedSpeeds[Math.floor(sortedSpeeds.length / 2)]
@@ -1686,11 +1686,11 @@ const performAnalysis = () => {
     
     let consistency, suggestion, validationPass
     
-    if (stdDev < 0.2) {
+    if (stdDev < 3) {
       consistency = '优秀'
-    } else if (stdDev < 0.5) {
+    } else if (stdDev < 8) {
       consistency = '良好'
-    } else if (stdDev < 1) {
+    } else if (stdDev < 15) {
       consistency = '一般'
     } else {
       consistency = '较差'
@@ -1785,8 +1785,8 @@ const performAnalysis = () => {
     const absStdDev = Math.sqrt(rss / n)
     
     const avgSpeed = sumY / n
-    const stdDev = (absStdDev / avgSpeed) * 100
-    const cv = stdDev
+    const stdDev = absStdDev
+    const cv = (absStdDev / avgSpeed) * 100
     
     const sortedSpeeds = [...speeds].sort((a, b) => a - b)
     const median = sortedSpeeds[Math.floor(sortedSpeeds.length / 2)]
@@ -2489,10 +2489,10 @@ const drawFitChartZoom = (ctx, width, height) => {
     const minSpeed = Math.min(...speeds)
     const maxSpeed = Math.max(...speeds)
     const absStdDev = Math.sqrt(speeds.reduce((acc, v) => acc + Math.pow(v - avgSpeed, 2), 0) / points.length)
-    const stdDev = (absStdDev / avgSpeed) * 100
+    const stdDev = absStdDev
     ctx.fillText(`平均声速: ${avgSpeed.toFixed(2)} m/s`, 70, 94)
     ctx.fillText(`声速范围: ${minSpeed.toFixed(1)} ~ ${maxSpeed.toFixed(1)} m/s`, 70, 117)
-    ctx.fillText(`标准差: ±${stdDev.toFixed(1)}%`, 70, 140)
+    ctx.fillText(`标准差: ${stdDev.toFixed(1)} m/s`, 70, 140)
   }
   
   if (stats) {

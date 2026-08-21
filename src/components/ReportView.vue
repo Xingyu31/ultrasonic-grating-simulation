@@ -173,7 +173,7 @@
                     </div>
                     <div class="analysis-item">
                       <span class="analysis-label">数据标准差</span>
-                      <span class="analysis-value">±{{ getStdDev(mode.id).toFixed(1) }}%</span>
+                      <span class="analysis-value">{{ getStdDev(mode.id).toFixed(1) }} m/s</span>
                     </div>
                     <div class="analysis-item">
                       <span class="analysis-label">数据一致性</span>
@@ -658,11 +658,13 @@ const getStdDev = (modeId) => {
   const avg = getAverageSpeed(modeId)
   const variance = records.reduce((acc, r) => acc + Math.pow(r.speed - avg, 2), 0) / records.length
   const absStdDev = Math.sqrt(variance)
-  return avg > 0 ? (absStdDev / avg) * 100 : 0
+  return absStdDev
 }
 
 const getConsistency = (modeId) => {
-  const cv = getStdDev(modeId)
+  const avg = getAverageSpeed(modeId)
+  const absStdDev = getStdDev(modeId)
+  const cv = avg > 0 ? (absStdDev / avg) * 100 : 0
   
   if (cv < 0.3) return '优秀'
   if (cv < 0.5) return '良好'
