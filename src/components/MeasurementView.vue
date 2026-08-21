@@ -435,7 +435,11 @@
               </div>
               <div class="summary-item">
                 <span class="summary-label">相对误差</span>
-                <span class="summary-value" :class="{ 'error-high': Math.abs(filteredAnalysisResult.relativeError) > 5 }">{{ filteredAnalysisResult.relativeError.toFixed(1) }}%</span>
+                <span class="summary-value" :class="{ 'error-high': Math.abs(filteredAnalysisResult.relativeError) > 5 }">{{ filteredAnalysisResult.relativeError.toFixed(2) }}%</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">绝对误差</span>
+                <span class="summary-value" :class="{ 'error-high': filteredAnalysisResult.absoluteError > 5 }">{{ filteredAnalysisResult.absoluteError.toFixed(1) }} m/s</span>
               </div>
             </div>
             <div class="analysis-details">
@@ -1666,6 +1670,7 @@ const performAnalysis = () => {
     
     const theoreticalSpeed = getSoundSpeed(props.params.liquidTypeId || 'nacl', props.params.concentration, props.params.temperature)
     const relativeError = Math.abs(((experimentalSpeed - theoreticalSpeed) / theoreticalSpeed) * 100)
+    const absoluteError = Math.abs(experimentalSpeed - theoreticalSpeed)
     
     const variance = speeds.reduce((acc, v) => acc + Math.pow(v - experimentalSpeed, 2), 0) / speeds.length
     const absStdDev = Math.sqrt(variance)
@@ -1717,6 +1722,7 @@ const performAnalysis = () => {
       experimentalSpeed,
       theoreticalSpeed,
       relativeError,
+      absoluteError,
       dataPoints: records.length,
       stdDev,
       cv,
@@ -1828,6 +1834,7 @@ const performAnalysis = () => {
       experimentalSpeed: avgSpeed,
       theoreticalSpeed: theoreticalIntercept + theoreticalSlope * props.params.concentration,
       relativeError: avgRelativeError,
+      absoluteError: Math.abs(avgSpeed - (theoreticalIntercept + theoreticalSlope * props.params.concentration)),
       dataPoints: records.length,
       stdDev,
       cv,
