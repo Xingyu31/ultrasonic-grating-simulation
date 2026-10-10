@@ -404,7 +404,9 @@ const createLaserBeam = () => {
  glow.rotation.z = Math.PI / 2;
  glow.position.set(beamLength / 2, 0, 0);
  beamGroup.add(glow);
- beamGroup.position.set(0, 1.4, 0);
+ // 光束从激光器出光口发出：激光器组位于(-15, 1.35)，出光口在组内高1.4处，
+ // 即世界坐标(-15, 2.75)，与光路轴OPTICAL_AXIS_Y等高，沿+X方向贯穿全部仪器至CCD
+ beamGroup.position.set(-15, 2.75, 0);
  laserBeam = beamGroup;
  scene.add(laserBeam);
 };
@@ -1320,6 +1322,11 @@ const createLaserAt = (pos) => {
  createLaserBeamAt(pos);
 };
 const createLaserBeamAt = (pos) => {
+ // 重复放置激光器时先移除旧光束，避免场景中残留多束激光
+ if (laserBeam) {
+ scene.remove(laserBeam);
+ laserBeam = null;
+ }
  const beamGroup = new THREE.Group();
  const beamLength = LASER_BEAM_LENGTH;
  const beamGeometry = new THREE.CylinderGeometry(0.022, 0.022, beamLength, 24);
@@ -1889,6 +1896,17 @@ const removeInstrument = () => {
  return;
  const id = selectedInstrument.value.id;
  scene.remove(selectedInstrument3D.value);
+ // 移除激光器时同步清除激光束并恢复共轴参考轴，避免光束悬空残留
+ if (id === 'laser') {
+ if (laserBeam) {
+ scene.remove(laserBeam);
+ laserBeam = null;
+ }
+ laserOn.value = false;
+ if (instruments.axisGuide) {
+ instruments.axisGuide.visible = true;
+ }
+ }
  delete instruments[id];
  usedInstruments.value = usedInstruments.value.filter(i => i !== id);
  fixedInstruments.value = fixedInstruments.value.filter(i => i !== id);
