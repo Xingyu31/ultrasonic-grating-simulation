@@ -200,13 +200,54 @@
             </div>
           </div>
           
+          <div class="pdf-section score-section">
+            <div class="section-header">
+              <span class="section-number">实验评价</span>
+              <h2 class="section-title">实验能力自动赋分</h2>
+              <span class="section-status" :class="scoreResult.gradeType">
+                总分 {{ scoreResult.total }} 分 · {{ scoreResult.grade }}
+              </span>
+            </div>
+            <div class="section-content">
+              <table class="data-table score-table">
+                <thead>
+                  <tr>
+                    <th>实验步骤</th>
+                    <th>满分</th>
+                    <th>得分</th>
+                    <th>评分说明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in scoreResult.items" :key="item.id">
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.full }}</td>
+                    <td :class="{ 'score-low': item.score < item.full * 0.6 }">{{ item.score }}</td>
+                    <td class="score-detail">{{ item.detail }}</td>
+                  </tr>
+                  <tr class="summary-row">
+                    <td class="summary-label" colspan="2">总分（{{ scoreResult.grade }}）</td>
+                    <td class="summary-value">{{ scoreResult.total }}</td>
+                    <td class="summary-value">满分 100 分</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="score-suggestions">
+                <p class="suggestions-title">改进建议</p>
+                <ol>
+                  <li v-for="(s, i) in scoreResult.suggestions" :key="i">{{ s }}</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
           <div class="pdf-footer">
             <div class="footer-line"></div>
             <p>超声光栅虚拟仿真实验平台 V4.0</p>
             <p>Generated at {{ currentDate }}</p>
           </div>
         </div>
-        
+
         <div v-else-if="activeTab === 'temperature'" class="report-pdf">
           <div class="pdf-header">
             <h1 class="pdf-title">纯水下温度调节实验报告</h1>
@@ -436,6 +477,7 @@
 import { computed, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getReportArchives, saveReportArchive, deleteReportArchive } from '../utils/reportArchive'
+import { scoreState, markStep } from '../utils/scoreStore'
 
 const toOneSigDigit = (x) => {
   if (x === 0) return 0
@@ -474,6 +516,15 @@ const currentDate = computed(() => {
     minute: '2-digit'
   })
 })
+
+// 实验能力自动赋分（与实时赋分系统共享同一份状态）
+const scoreResult = computed(() => ({
+  items: scoreState.items,
+  total: scoreState.total,
+  grade: scoreState.grade,
+  gradeType: scoreState.gradeType,
+  suggestions: scoreState.suggestions
+}))
 
 const liquidTypesData = {
   'pure-water': {
@@ -741,10 +792,12 @@ const formatValue = (record, field) => {
 }
 
 const printReport = () => {
+  markStep(21)
   window.print()
 }
 
 const saveReport = () => {
+  markStep(21)
   const reportContent = document.querySelector('.report-pdf').innerHTML
   const blob = new Blob([reportContent], { type: 'text/html' })
   const url = URL.createObjectURL(blob)
@@ -1696,6 +1749,59 @@ loadArchives()
   margin: 5px 0;
   color: #0369a1;
   font-size: 14px;
+}
+
+/* 实验评价赋分区 */
+.score-section .section-status.excellent {
+  color: #15803d;
+  background: #dcfce7;
+}
+.score-section .section-status.good {
+  color: #a16207;
+  background: #fef9c3;
+}
+.score-section .section-status.medium,
+.score-section .section-status.pass {
+  color: #c2410c;
+  background: #ffedd5;
+}
+.score-section .section-status.fail {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+.score-table td,
+.score-table th {
+  text-align: center;
+}
+.score-table .score-detail {
+  text-align: left;
+  font-size: 13px;
+  color: #475569;
+}
+.score-table .score-low {
+  color: #b91c1c;
+  font-weight: 700;
+}
+.score-suggestions {
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+}
+.score-suggestions .suggestions-title {
+  font-weight: 700;
+  color: #0369a1;
+  margin: 0 0 6px;
+}
+.score-suggestions ol {
+  margin: 0;
+  padding-left: 22px;
+}
+.score-suggestions li {
+  color: #075985;
+  font-size: 13px;
+  line-height: 1.8;
 }
 
 @media print {

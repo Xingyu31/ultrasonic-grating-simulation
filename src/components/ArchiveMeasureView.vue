@@ -218,6 +218,7 @@ import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import ZoomModal from './ZoomModal.vue'
 import { ElMessage } from 'element-plus'
 import { getResonanceMarks, snapToResonantFrequency } from '../utils/physics.js'
+import { markStep } from '../utils/scoreStore'
 
 const props = defineProps({
   archive: {
@@ -919,6 +920,8 @@ const calculateSpacing = () => {
     calculatedConcentration.value = (calculatedVs - props.archive.intercept) / props.archive.slope
     
     ElMessage.success(`计算完成！声速: ${calculatedVs.toFixed(2)} m/s, 浓度: ${calculatedConcentration.value.toFixed(4)} wt%`)
+    markStep(19)
+    markStep(20)
     
     nextTick(() => {
       drawCurvePreview()

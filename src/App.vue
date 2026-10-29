@@ -15,6 +15,9 @@
           <span class="version-badge">V4.1</span>
         </div>
         <div class="title-right">
+          <button class="score-btn" @click="openScorePanel">
+            <span>🎯</span> 赋分提示
+          </button>
           <button class="nav-btn" :class="{ active: currentView === 'measurement' }"
                   @click="goToMeasurement">
             <span>📊</span> 测量界面
@@ -71,6 +74,8 @@
                   @close="closeReport" />
       
       <ArchiveList v-if="showArchiveList" @close="closeArchiveList" @select="selectArchive" />
+
+      <ScorePanel v-if="showScorePanel" @close="showScorePanel = false" />
     </template>
   </div>
 </template>
@@ -85,11 +90,14 @@ import WelcomePage from './components/WelcomePage.vue'
 import ReportView from './components/ReportView.vue'
 import ArchiveList from './components/ArchiveList.vue'
 import ArchiveMeasureView from './components/ArchiveMeasureView.vue'
+import ScorePanel from './components/ScorePanel.vue'
 import { saveRecords, clearRecords, saveParams, clearParams, saveMode, loadMode } from './utils/recordStorage'
+import { markStep, setScoreContext } from './utils/scoreStore'
 
 const experimentStarted = ref(false)
 const currentView = ref('simulation')
 const showReport = ref(false)
+const showScorePanel = ref(false)
 const showArchiveList = ref(false)
 const experimentMode = ref('wavelength')
 const selectedArchive = ref(null)
@@ -98,6 +106,11 @@ const simulationMode = ref('3d')
 
 const startExperiment = () => {
   experimentStarted.value = true
+  markStep(1)
+}
+
+const openScorePanel = () => {
+  showScorePanel.value = true
 }
 
 const params = reactive({
@@ -124,14 +137,18 @@ onMounted(() => {
   if (savedMode) {
     experimentMode.value = savedMode
   }
+  // 初始化赋分上下文（首次结算不弹提示）
+  setScoreContext(experimentRecords.value, params)
 })
 
 watch(experimentRecords, (newRecords) => {
   saveRecords(newRecords)
+  setScoreContext(newRecords, params)
 }, { deep: true })
 
 watch(params, (newParams) => {
   saveParams(newParams)
+  setScoreContext(experimentRecords.value, newParams)
 }, { deep: true })
 
 watch(experimentMode, (newMode) => {
@@ -176,6 +193,7 @@ const goToMeasurement = () => {
 
 const openReport = () => {
   showReport.value = true
+  markStep(22)
 }
 
 const closeReport = () => {
@@ -340,6 +358,26 @@ const returnToArchiveMeasure = (fromSimulationParams) => {
 .report-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(39, 174, 96, 0.4);
+}
+
+.score-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.score-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.45);
 }
 
 .exit-btn {

@@ -140,7 +140,7 @@
       :params="localParams"
       :experimentMode="props.experimentMode"
       @close="showCcdModal = false"
-      @focusComplete="completeStep(4)"
+      @focusComplete="handleFocusComplete"
       @addRecord="handleAddRecord"
     />
   </div>
@@ -154,6 +154,7 @@ import GeneratorModal from './GeneratorModal.vue'
 import LaserModal from './LaserModal.vue'
 import TelescopeModal from './TelescopeModal.vue'
 import CcdModal from './CcdModal.vue'
+import { markStep } from '../utils/scoreStore'
 
 const props = defineProps({
   params: {
@@ -228,6 +229,7 @@ const updateConcentration = (concentration) => {
 const updateLiquidType = (liquidType) => {
   localParams.liquidType = liquidType.name
   localParams.liquidTypeId = liquidType.id
+  if (liquidType.id === 'pure-water') markStep(11)
   emit('update:params', { liquidType: liquidType.name, liquidTypeId: liquidType.id })
 }
 
@@ -238,6 +240,7 @@ const updateTemperature = (temperature) => {
 
 const updateFrequency = (frequency) => {
   localParams.frequency = frequency
+  markStep(10)
   emit('update:params', { frequency })
 }
 
@@ -248,6 +251,7 @@ const updateAmplitude = (amplitude) => {
 
 const updateWavelength = (wavelength) => {
   localParams.wavelength = wavelength
+  markStep(9)
   emit('update:params', { wavelength })
 }
 
@@ -263,7 +267,13 @@ const onSceneReady = () => {
 }
 
 const handleAddRecord = (record) => {
+  markStep(8)
   emit('addRecord', record)
+}
+
+const handleFocusComplete = () => {
+  markStep(12)
+  completeStep(4)
 }
 
 const openComputer = () => {
@@ -276,6 +286,7 @@ const openComputer = () => {
 }
 
 const openLaser = () => {
+  markStep(2)
   showLaserModal.value = true
 }
 
@@ -292,10 +303,12 @@ const handleToggleLaser = () => {
     sceneRef.value.toggleLaserState()
   }
   laserOnState.value = !laserOnState.value
+  if (laserOnState.value) markStep(3)
 }
 
 const openTelescope = () => {
   if (currentStep.value >= 4) {
+    markStep(6)
     showTelescopeModal.value = true
   } else {
     alert('请先完成上一步：调节频率')
@@ -304,6 +317,7 @@ const openTelescope = () => {
 
 const openCell = () => {
   if (currentStep.value >= 2) {
+    markStep(4)
     showCellModal.value = true
   } else {
     alert('请先完成上一步：开启光源')
@@ -312,6 +326,7 @@ const openCell = () => {
 
 const openGenerator = () => {
   if (currentStep.value >= 3) {
+    markStep(5)
     showGeneratorModal.value = true
   } else {
     alert('请先完成上一步：调节浓度')
@@ -320,6 +335,7 @@ const openGenerator = () => {
 
 const openCCD = () => {
   if (currentStep.value >= 4) {
+    markStep(7)
     showCcdModal.value = true
   } else {
     alert('请先完成上一步：调节频率')
